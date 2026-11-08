@@ -1,6 +1,14 @@
 package com.honggeun.sendweddingsms
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import android.view.WindowManager
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -37,6 +45,13 @@ class PreviewActivity : AppCompatActivity() {
     private var status = Status.UNSENT
     private var formatFilterName: String? = null
     private var visible: List<ContactEntry> = emptyList()
+    private lateinit var autoSendButton: Button
+    private var sender: AutoSender? = null
+
+    private val smsPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) confirmAutoSend() else showSmsPermissionHelp()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +111,15 @@ class PreviewActivity : AppCompatActivity() {
             }
         }
 
+        autoSendButton = findViewById(R.id.autoSend)
+        autoSendButton.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                confirmAutoSend()
+            } else {
+                smsPermission.launch(Manifest.permission.SEND_SMS)
+            }
+        }
+
         if (ContactCache.entries.isEmpty()) {
             // 앱이 백그라운드에서 정리된 뒤 다시 열린 경우
             thread {
@@ -114,6 +138,7 @@ class PreviewActivity : AppCompatActivity() {
         formats = store.formats()
         link = store.link
         linkWarning.visibility = if (link.isBlank()) View.VISIBLE else View.GONE
+        autoSendButton.visibility = if (store.autoSend) View.VISIBLE else View.GONE
         val labels = listOf(getString(R.string.all_formats)) + formats.map { it.name }
         formatFilter.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
         val idx = formats.indexOfFirst { it.name == formatFilterName }
@@ -137,6 +162,101 @@ class PreviewActivity : AppCompatActivity() {
         adapter.submit(visible)
         val sent = selected.count { it.sentAt > 0 }
         countText.text = "보낼 사람 ${selected.size}명 · 보냄 ${sent}명 · 남음 ${selected.size - sent}명"
+    }
+
+    private fun showSmsPermissionHelp() {
+        AlertDialog.Builder(this)
+            .setTitle("문자 권한이 필요해요")
+            .setMessage(R.string.restricted_help)
+            .setPositiveButton("설정 열기") { _, _ ->
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+                )
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    /** 지금 화면에 보이는 사람 중 안 보낸 사람에게 자동으로 보낸다. */
+    private fun confirmAutoSend() {
+        if (sender != null) return
+        val targets = visible.filter { it.sentAt == 0L }
+        if (targets.isEmpty()) {
+            Toast.makeText(this, "이 목록에 안 보낸 사람이 없어요", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (link.isBlank()) {
+            Toast.makeText(this, "청첩장 주소를 먼저 넣어 주세요", Toast.LENGTH_LONG).show()
+            return
+        }
+        val minutes = (targets.size * (AutoSender.DELAY_MS / 1000.0 + 1) / 60).let { if (it < 1) 1 else Math.ceil(it).toInt() }
+        val names = targets.take(5).joinToString(", ") { it.name } + if (targets.size > 5) " 외 ${targets.size - 5}명" else ""
+        AlertDialog.Builder(this)
+            .setTitle("${targets.size}명에게 자동으로 보낼까요?")
+            .setMessage(
+                "받는 사람: $names\n\n" +
+                    "한 명씩 약 3초 간격으로 보내서 ${minutes}분쯤 걸려요. 보내는 동안 이 화면을 켜 두세요.\n" +
+                    "보내기 전에 미리보기에서 문구를 꼭 확인해 주세요. 보낸 문자는 되돌릴 수 없어요."
+            )
+            .setPositiveButton("보내기") { _, _ -> runAutoSend(targets) }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun runAutoSend(targets: List<ContactEntry>) {
+        val pairs = targets.map { it to MessageRenderer.messageFor(it, formats, link) }
+        val s = AutoSender(this)
+        sender = s
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        val progress = AlertDialog.Builder(this)
+            .setTitle("자동 발송 중")
+            .setMessage("준비 중…")
+            .setCancelable(false)
+            .setNegativeButton("중지", null)
+            .create()
+        progress.setOnShowListener {
+            progress.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
+                s.cancel()
+                progress.setMessage("지금 보내는 문자까지만 보내고 멈춰요…")
+            }
+        }
+        progress.show()
+
+        var sentCount = 0
+        s.start(
+            pairs,
+            onProgress = { i, total, e -> progress.setMessage("${i + 1} / $total\n${e.name}님께 보내는 중…\n\n보냄 ${sentCount}명") },
+            onResult = { e, ok ->
+                if (ok) {
+                    sentCount++
+                    e.sentAt = System.currentTimeMillis()
+                    store.save(listOf(e))
+                }
+            },
+            onFinish = { sent, failed, stopped ->
+                sender = null
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                if (!isFinishing && !isDestroyed) {
+                    progress.dismiss()
+                    refresh()
+                    val msg = buildString {
+                        append(if (stopped) "중지했어요.\n" else "다 보냈어요.\n")
+                        append("보냄 ${sent}명")
+                        if (failed.isNotEmpty()) {
+                            append(", 실패 ${failed.size}명\n\n실패: ")
+                            append(failed.joinToString(", ") { it.name })
+                            append("\n\n실패한 사람은 \"안 보낸 사람\" 목록에 남아 있어요. 다시 자동 발송하거나 한 명씩 보내 주세요.")
+                        }
+                    }
+                    AlertDialog.Builder(this).setTitle("자동 발송 결과").setMessage(msg).setPositiveButton("확인", null).show()
+                }
+            },
+        )
+    }
+
+    override fun onDestroy() {
+        sender?.cancel()
+        super.onDestroy()
     }
 
     private fun send(e: ContactEntry) {

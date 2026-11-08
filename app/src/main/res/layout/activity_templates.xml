@@ -40,6 +40,21 @@
                 android:importantForAutofill="no"
                 android:inputType="textUri" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/autoSendSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="자동 일괄 발송 사용"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/auto_send_help"
+                android:textSize="14sp" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

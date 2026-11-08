@@ -14,6 +14,8 @@
     <string name="menu_bulk_format">화면에 보이는 사람 형식 한꺼번에 정하기</string>
     <string name="bulk_format_title">화면에 보이는 %1$d명의 형식</string>
     <string name="bulk_format_done">%1$d명을 \'%2$s\' 형식으로 정했어요</string>
+    <string name="auto_send_help">켜면 미리보기 화면에 \"자동 발송\" 버튼이 생겨요. 안 보낸 사람들에게 앱이 직접 문자를 한 명씩(약 3초 간격) 보내요. 끄면 지금처럼 한 명씩 문자 앱을 열어 직접 전송을 눌러요.\n처음 켤 때 문자 보내기 권한을 물어봐요.</string>
+    <string name="restricted_help">문자 권한이 꺼져 있어요.\n\n플레이스토어에서 받지 않은 앱은 안드로이드가 문자 권한을 막아 두기도 해요. 아래 순서로 풀어 주세요.\n\n1. \"설정 열기\"를 눌러요.\n2. 오른쪽 위 ⋮ 를 누르고 \"제한된 설정 허용\"을 눌러요. (이 메뉴가 없으면 건너뛰어요.)\n3. 권한 → SMS → 허용을 눌러요.\n4. 이 화면으로 돌아와 자동 발송을 다시 눌러요.</string>
     <string name="preview_button">미리보기 · 보내기</string>
     <string name="templates_help">사람마다 형식(어르신, 직원, 거래처 등)을 정하면 그 형식의 문구가 나가요.\n{이름}은 부를 이름, {이름아}는 \"철수야/길동아\"처럼 바뀌고, {링크}는 위의 청첩장 주소로 바뀌어요. {링크}가 없으면 주소는 맨 끝에 붙어요.\n맨 위 형식은 형식을 안 정한 사람에게 쓰여요.</string>
     <string name="permission_needed">연락처를 읽으려면 권한이 필요해요.</string>

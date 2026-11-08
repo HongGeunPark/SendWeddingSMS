@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.materialswitch.MaterialSwitch
 
 /** 청첩장 주소와 형식별(어르신, 직원, 거래처 등) 문구를 정하는 화면. */
 class TemplatesActivity : AppCompatActivity() {
@@ -31,6 +32,10 @@ class TemplatesActivity : AppCompatActivity() {
 
         linkInput.setText(store.link)
         linkInput.doAfterTextChanged { store.link = it?.toString() ?: "" }
+
+        val autoSwitch = findViewById<MaterialSwitch>(R.id.autoSendSwitch)
+        autoSwitch.isChecked = store.autoSend
+        autoSwitch.setOnCheckedChangeListener { _, checked -> store.autoSend = checked }
 
         findViewById<Button>(R.id.addFormat).setOnClickListener { editFormat(-1) }
 

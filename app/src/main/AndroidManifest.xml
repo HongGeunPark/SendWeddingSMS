@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 연락처를 읽는 권한만 쓴다. 인터넷 권한이 없어서 연락처가 폰 밖으로 나가지 않는다. -->
+    <!-- 연락처 읽기와(자동 발송을 켰을 때) 문자 보내기 권한만 쓴다. 인터넷 권한이 없어서 연락처가 폰 밖으로 나가지 않는다. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- 자동 일괄 발송을 켰을 때만 요청한다. -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
     <application
         android:allowBackup="false"
@@ -25,6 +28,7 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".PreviewActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>
