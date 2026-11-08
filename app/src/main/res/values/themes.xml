@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SendWeddingSMS" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/pink</item>
+        <item name="colorSecondaryContainer">@color/pink_light</item>
+        <item name="android:statusBarColor">@color/pink</item>
+    </style>
+</resources>
