@@ -6,6 +6,8 @@
     android:orientation="vertical">
 
     <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/pink"
@@ -57,6 +59,12 @@
             android:layout_weight="1"
             android:text="@string/filter_unselected" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <Spinner
+        android:id="@+id/formatFilter"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginHorizontal="12dp" />
 
     <TextView
         android:id="@+id/count"
@@ -130,12 +138,30 @@
             android:text="@string/clear_visible" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/export"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="12dp"
-        android:text="@string/export"
-        android:textSize="18sp" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp"
+        android:paddingBottom="8dp">
+
+        <Button
+            android:id="@+id/export"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_margin="4dp"
+            android:layout_weight="1"
+            android:text="@string/export"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/preview"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_margin="4dp"
+            android:layout_weight="1.4"
+            android:text="@string/preview_button"
+            android:textSize="16sp" />
+    </LinearLayout>
 </LinearLayout>

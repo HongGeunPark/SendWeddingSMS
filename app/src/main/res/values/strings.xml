@@ -9,18 +9,13 @@
     <string name="select_visible">화면 전체 선택</string>
     <string name="clear_visible">화면 전체 해제</string>
     <string name="export">엑셀로 저장</string>
-    <string name="relation_none">관계</string>
-    <string name="relation_title">%1$s님과의 관계</string>
-    <string name="relation_clear">(지우기)</string>
-    <string-array name="relations">
-        <item>가족·친척</item>
-        <item>직장</item>
-        <item>친구</item>
-        <item>동창</item>
-        <item>지인</item>
-        <item>모임</item>
-        <item>기타</item>
-    </string-array>
+    <string name="all_formats">모든 형식</string>
+    <string name="menu_templates">문구 설정</string>
+    <string name="menu_bulk_format">화면에 보이는 사람 형식 한꺼번에 정하기</string>
+    <string name="bulk_format_title">화면에 보이는 %1$d명의 형식</string>
+    <string name="bulk_format_done">%1$d명을 \'%2$s\' 형식으로 정했어요</string>
+    <string name="preview_button">미리보기 · 보내기</string>
+    <string name="templates_help">사람마다 형식(어르신, 직원, 거래처 등)을 정하면 그 형식의 문구가 나가요.\n{이름}은 부를 이름, {이름아}는 \"철수야/길동아\"처럼 바뀌고, {링크}는 위의 청첩장 주소로 바뀌어요. {링크}가 없으면 주소는 맨 끝에 붙어요.\n맨 위 형식은 형식을 안 정한 사람에게 쓰여요.</string>
     <string name="permission_needed">연락처를 읽으려면 권한이 필요해요.</string>
     <string name="permission_denied">연락처 권한이 꺼져 있어요.\n아래 버튼을 눌러 허용해 주세요.\n(설정 화면이 열리면 권한 → 연락처 → 허용)</string>
     <string name="permission_button">연락처 권한 허용</string>

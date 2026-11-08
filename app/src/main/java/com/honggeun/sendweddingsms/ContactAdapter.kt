@@ -9,8 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 
 class ContactAdapter(
+    private val formatLabel: (ContactEntry) -> String,
     private val onToggle: (ContactEntry) -> Unit,
-    private val onRelation: (ContactEntry) -> Unit,
+    private val onEdit: (ContactEntry) -> Unit,
 ) : RecyclerView.Adapter<ContactAdapter.Holder>() {
 
     private var items: List<ContactEntry> = emptyList()
@@ -24,7 +25,7 @@ class ContactAdapter(
         val check: CheckBox = view.findViewById(R.id.check)
         val name: TextView = view.findViewById(R.id.name)
         val phone: TextView = view.findViewById(R.id.phone)
-        val relation: MaterialButton = view.findViewById(R.id.relation)
+        val edit: MaterialButton = view.findViewById(R.id.relation)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder =
@@ -35,10 +36,11 @@ class ContactAdapter(
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val e = items[position]
         holder.check.isChecked = e.selected
-        holder.name.text = e.name
-        holder.phone.text = if (e.otherPhones.isEmpty()) e.phone else "${e.phone}  (외 ${e.otherPhones.size}개)"
-        holder.relation.text = e.relation.ifEmpty { holder.itemView.context.getString(R.string.relation_none) }
+        holder.name.text = if (e.callName.isNotEmpty() && e.callName != e.name) "${e.name} (${e.callName})" else e.name
+        val phone = if (e.otherPhones.isEmpty()) e.phone else "${e.phone}  (외 ${e.otherPhones.size}개)"
+        holder.phone.text = if (e.sentAt > 0) "$phone  · 보냄 ✓" else phone
+        holder.edit.text = formatLabel(e) + if (e.customMessage.isNotBlank()) " ✎" else ""
         holder.itemView.setOnClickListener { onToggle(e) }
-        holder.relation.setOnClickListener { onRelation(e) }
+        holder.edit.setOnClickListener { onEdit(e) }
     }
 }
