@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>청첩장 연락처 사용설명서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column; a phone-frame "video" player up top, then numbered chapters each paired with the matching phone screen. */
+:root {
+  --bg: #fbf7f8;
+  --paper: #ffffff;
+  --ink: #2b1d24;
+  --muted: #6d5a63;
+  --line: #ead9df;
+  --accent: #c2185b;
+  --accent-soft: #fbe3ec;
+  --warn-bg: #fff4e0;
+  --warn-ink: #7a4b00;
+  --display: "Gowun Batang", "Nanum Myeongjo", "AppleMyungjo", serif;
+  --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  /* the app's own look, kept the same in both themes */
+  --app-pink: #D81B60;
+  --app-pink-light: #FCE4EC;
+  --app-bg: #ffffff;
+  --app-ink: #1f1a1c;
+  --app-muted: #6b6468;
+  --app-line: #e6e0e3;
+  --app-dim: rgba(20, 10, 15, .45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1418; --paper: #251c21; --ink: #f3e9ed; --muted: #b9a7af; --line: #3e3037;
+    --accent: #f48fb1; --accent-soft: #3a2230; --warn-bg: #3a2c12; --warn-ink: #f3d39a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1418; --paper: #251c21; --ink: #f3e9ed; --muted: #b9a7af; --line: #3e3037;
+  --accent: #f48fb1; --accent-soft: #3a2230; --warn-bg: #3a2c12; --warn-ink: #f3d39a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+img { max-width: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 18px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+.wrap { max-width: 860px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.35; margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 44px); }
+h2 { font-size: clamp(24px, 4.4vw, 30px); }
+h3 { font-size: 20px; }
+p { margin: 0; }
+a { color: var(--accent); }
+header.top { padding-block: 40px 24px; display: grid; gap: 12px; }
+.eyebrow { font-size: 14px; letter-spacing: .08em; color: var(--accent); font-weight: 700; }
+.lead { color: var(--muted); max-width: 40em; }
+.dl {
+  display: grid; gap: 10px; padding: 18px; border-radius: 14px;
+  background: var(--accent-soft); margin-top: 8px;
+}
+.dl .url { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 14px; user-select: all; word-break: break-all; }
+.dl-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.b {
+  appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--paper);
+  font: 700 16px/1 var(--body); padding: 12px 16px; border-radius: 999px; cursor: pointer; text-decoration: none;
+}
+.b.ghost { background: transparent; color: var(--accent); }
+.b:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---- player ---- */
+.player {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
+  padding: 20px; display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center;
+}
+.player .cap { display: grid; gap: 10px; min-width: 0; }
+.player .num { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.player .cap h3 { font-size: 22px; }
+.player .cap p { color: var(--muted); }
+.segs { display: flex; gap: 4px; margin-top: 6px; }
+.segs button { flex: 1; height: 6px; border: 0; padding: 0; border-radius: 3px; background: var(--line); cursor: pointer; position: relative; overflow: hidden; }
+.segs button.done { background: var(--accent); }
+.segs button i { position: absolute; inset: 0; width: 0; background: var(--accent); }
+.ctrls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+@media (max-width: 640px) {
+  .player { grid-template-columns: 1fr; justify-items: center; text-align: left; }
+  .player .cap { width: 100%; }
+}
+
+/* ---- chapters ---- */
+main { display: grid; gap: 28px; margin-top: 36px; }
+.chap {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px;
+  display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start;
+}
+.chap > .txt { display: grid; gap: 14px; min-width: 0; }
+.chap .shots { display: grid; gap: 14px; justify-items: center; }
+.chap .shots figcaption { font-size: 14px; color: var(--muted); text-align: center; }
+.chap .tag { font-size: 14px; color: var(--accent); font-weight: 700; letter-spacing: .04em; }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 10px; }
+ol.steps > li::before {
+  content: counter(s); width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 16px;
+  display: grid; place-items: center; margin-top: 2px;
+}
+ul.dots { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.k { font-weight: 700; color: var(--accent); white-space: nowrap; }
+.note { background: var(--warn-bg); color: var(--warn-ink); border-radius: 12px; padding: 14px 16px; font-size: 16px; }
+.tip { background: var(--accent-soft); border-radius: 12px; padding: 14px 16px; font-size: 16px; }
+@media (max-width: 640px) {
+  .chap { grid-template-columns: 1fr; padding: 20px 16px; }
+}
+details { border-top: 1px solid var(--line); padding-block: 14px; }
+details:last-child { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; font-weight: 700; }
+details > div { margin-top: 10px; display: grid; gap: 10px; color: var(--ink); }
+footer { margin-top: 32px; color: var(--muted); font-size: 14px; }
+
+/* ---- phone mockups (the app's own colors) ---- */
+.phone {
+  --w: 250px;
+  width: var(--w); max-width: 100%; aspect-ratio: 9 / 18.5;
+  border-radius: 30px; padding: 9px; background: #1d1a1c;
+  box-shadow: 0 10px 30px rgba(40, 10, 25, .18);
+  flex: none;
+}
+.phone.sm { --w: 210px; }
+.scr {
+  position: relative; width: 100%; height: 100%; border-radius: 22px; overflow: hidden;
+  background: var(--app-bg); color: var(--app-ink);
+  font: 400 11px/1.45 var(--body); display: flex; flex-direction: column;
+}
+.sb { height: 18px; display: flex; justify-content: space-between; padding: 3px 14px 0; font-size: 9px; color: var(--app-muted); }
+.tb { background: var(--app-pink); color: #fff; font-weight: 700; font-size: 13px; padding: 10px 12px; display: flex; justify-content: space-between; }
+.sh { background: var(--app-pink-light); color: var(--app-pink); font-weight: 700; padding: 6px 12px; font-size: 10.5px; }
+.body { padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; flex: 1; overflow: hidden; }
+.lbl { font-weight: 700; font-size: 11.5px; }
+.inp { border-bottom: 1.5px solid var(--app-pink); padding: 3px 0; font-size: 10.5px; }
+.inp.multi { border: 1px solid var(--app-line); border-radius: 6px; padding: 6px; min-height: 64px; white-space: pre-line; }
+.row { display: flex; gap: 5px; align-items: center; }
+.sp { flex: 1; }
+.tn { background: var(--app-pink-light); color: var(--app-pink); border-radius: 999px; padding: 5px 0; text-align: center; font-weight: 700; flex: 1; font-size: 10px; }
+.ob { border: 1px solid var(--app-pink); color: var(--app-pink); border-radius: 999px; padding: 3px 8px; font-size: 9.5px; font-weight: 700; }
+.help { background: var(--app-pink-light); border-radius: 6px; padding: 6px 7px; font-size: 9px; line-height: 1.45; }
+.pv { background: var(--app-pink-light); border-radius: 6px; padding: 7px; font-size: 9.5px; white-space: pre-line; }
+.pb { margin: 8px 10px 12px; background: var(--app-pink); color: #fff; text-align: center; border-radius: 999px; padding: 10px 0; font-weight: 700; font-size: 12px; }
+.srch { border: 1px solid var(--app-line); border-radius: 999px; padding: 5px 10px; color: var(--app-muted); font-size: 10px; }
+.chips { display: flex; gap: 4px; }
+.chip { border: 1px solid var(--app-line); border-radius: 999px; padding: 2px 8px; font-size: 9.5px; }
+.chip.on { background: var(--app-pink-light); border-color: var(--app-pink); color: var(--app-pink); font-weight: 700; }
+.cnt { font-size: 9.5px; color: var(--app-muted); }
+.li { display: flex; gap: 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--app-line); }
+.cb { width: 14px; height: 14px; border: 1.5px solid var(--app-muted); border-radius: 3px; flex: none; display: grid; place-items: center; font-size: 10px; color: #fff; }
+.cb.on { background: var(--app-pink); border-color: var(--app-pink); }
+.li .n { font-weight: 700; font-size: 11px; }
+.li .s { font-size: 9px; color: var(--app-muted); }
+.card { border: 1px solid var(--app-line); border-radius: 8px; padding: 7px 8px; display: grid; gap: 4px; }
+.card .n { font-weight: 700; font-size: 11px; }
+.card .m { font-size: 9px; color: var(--app-pink); }
+.card .t { font-size: 9px; white-space: pre-line; color: var(--app-ink); max-height: 54px; overflow: hidden; }
+.card .acts { display: flex; justify-content: flex-end; gap: 6px; align-items: center; }
+.del { color: #D32F2F; font-weight: 700; font-size: 9.5px; padding: 2px 6px; }
+.dim { position: absolute; inset: 0; background: var(--app-dim); display: grid; place-items: center; padding: 14px; }
+.dlg { background: var(--app-bg); border-radius: 14px; padding: 13px; width: 100%; display: grid; gap: 7px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.dlg .h { font-weight: 700; font-size: 12.5px; }
+.dlg .x { font-size: 10px; white-space: pre-line; color: var(--app-ink); }
+.dlg .bt { display: flex; justify-content: flex-end; gap: 12px; color: var(--app-pink); font-weight: 700; font-size: 10.5px; padding-top: 2px; }
+.dlg .opt { border-bottom: 1px solid var(--app-line); padding: 5px 0; font-size: 10px; }
+.dlg .opt b { display: block; font-size: 10.5px; }
+.bar { height: 5px; border-radius: 3px; background: var(--app-line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--app-pink); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--app-bg); border-radius: 14px 14px 0 0; padding: 14px; display: grid; gap: 8px; box-shadow: 0 -4px 16px rgba(0,0,0,.18); }
+.addr { margin: 6px 10px; background: #f1eef0; border-radius: 999px; padding: 6px 10px; font-size: 9.5px; color: var(--app-muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.set-h { padding: 12px; font-size: 14px; font-weight: 700; }
+.tg { width: 30px; height: 16px; border-radius: 999px; background: var(--app-pink); position: relative; flex: none; }
+.tg::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.tg.off { background: #bdb5b9; }
+.tg.off::after { right: auto; left: 2px; }
+.snack { position: absolute; left: 10px; right: 10px; bottom: 58px; background: #2f2a2d; color: #fff; border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; font-size: 10px; }
+.snack b { color: #f8a5c2; }
+.hl { position: relative; z-index: 1; }
+.hl::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 12px;
+  border: 2.5px solid #ff9800; pointer-events: none;
+  animation: pulse 1.3s ease-out infinite;
+}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,152,0,.6); } 100% { box-shadow: 0 0 0 10px rgba(255,152,0,0); } }
+.fade { animation: fadein .35s ease-out; }
+@keyframes fadein { from { opacity: .3; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hl::after { animation: none; }
+  .fade { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">아버지 폰용 · 안드로이드</div>
+    <h1>청첩장 연락처 사용설명서</h1>
+    <p class="lead">휴대폰 연락처에서 보낼 사람을 고르고, 사람마다 이름을 넣은 문자에 모바일 청첩장 주소를 붙여 한 번에 보내는 앱이에요. 설치부터 보내기까지 순서대로 적었어요. 아래 화면은 따라 보기 쉽게 그린 그림이라 실제 폰 화면과 글씨 모양이 조금 다를 수 있어요.</p>
+    <div class="dl">
+      <strong>앱 받는 곳 (폰에서 열기)</strong>
+      <span class="url" id="apkUrl">https://github.com/HongGeunPark/SendWeddingSMS/releases/download/latest/SendWeddingSMS.apk</span>
+      <div class="dl-row">
+        <a class="b" href="https://github.com/HongGeunPark/SendWeddingSMS/releases/download/latest/SendWeddingSMS.apk" target="_blank" rel="noopener">앱 받기</a>
+        <button class="b ghost" id="copyBtn" type="button">주소 복사</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="player" aria-label="따라 보기 화면">
+    <div class="phone" id="pPhone"><div class="scr" id="pScr"></div></div>
+    <div class="cap">
+      <div class="num" id="pNum">1 / 13</div>
+      <h3 id="pTitle"></h3>
+      <p id="pText"></p>
+      <div class="segs" id="pSegs"></div>
+      <div class="ctrls">
+        <button class="b ghost" id="pPrev" type="button">◀ 이전</button>
+        <button class="b" id="pPlay" type="button">⏸ 멈춤</button>
+        <button class="b ghost" id="pNext" type="button">다음 ▶</button>
+      </div>
+      <p style="font-size:14px">주황색 테두리가 그 화면에서 누를 곳이에요. 처음부터 끝까지 약 1분이에요.</p>
+    </div>
+  </section>
+
+  <main>
+    <section class="chap" id="install">
+      <div class="txt">
+        <div class="tag">처음 한 번만</div>
+        <h2>앱 설치하기</h2>
+        <ol class="steps">
+          <li><div>아버지 폰에서 위의 <span class="k">앱 받기</span>를 누르거나, 카톡으로 받은 주소를 눌러요. <b>SendWeddingSMS.apk</b> 파일이 내려받아져요.</div></li>
+          <li><div>“파일이 기기를 손상시킬 수 있다”는 안내가 나오면 <span class="k">다운로드</span> 또는 <span class="k">무시하고 다운로드</span>를 눌러요. 직접 만든 앱이라 플레이스토어에 없어서 나오는 안내예요.</div></li>
+          <li><div>다 받아지면 화면 아래의 <span class="k">열기</span>를 눌러요. 못 찾으면 <b>내 파일 → 다운로드</b>에서 파일을 눌러도 돼요.</div></li>
+          <li><div>“출처를 알 수 없는 앱” 안내가 나오면 <span class="k">설정</span>을 누르고 <span class="k">이 출처 허용</span>을 켠 뒤 뒤로 가기를 눌러요.</div></li>
+          <li><div><span class="k">설치</span>를 눌러요. Play 프로텍트 경고가 나오면 <span class="k">세부정보 더보기 → 무시하고 설치</span>를 눌러요.</div></li>
+          <li><div>홈 화면에 <b>청첩장 연락처</b> 앱이 생겨요.</div></li>
+        </ol>
+        <div class="tip">새 버전이 나오면 같은 주소에서 다시 받아 그대로 설치하면 돼요. 이전에 넣어 둔 청첩장 주소와 보낸 기록은 그대로 남아요.</div>
+      </div>
+      <div class="shots">
+        <figure style="margin:0"><div class="phone sm"><div class="scr" data-screen="unknown"></div></div><figcaption>4. 이 출처 허용 켜기</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="chap" id="step1">
+      <div class="txt">
+        <div class="tag">1단계 / 3</div>
+        <h2>보낼 문구 쓰기</h2>
+        <ol class="steps">
+          <li><div><b>모바일 청첩장 주소</b> 칸에 청첩장 링크를 붙여 넣어요. 한 번 넣으면 다음에도 남아 있어요.</div></li>
+          <li><div>처음이라면 <span class="k">예시 문구 불러오기</span>를 눌러 어르신·친구·직원·거래처 중 하나를 고르세요. 불러온 다음 마음대로 고치면 돼요.</div></li>
+          <li><div>문구 중간에 받는 사람 이름을 넣고 싶은 자리에 커서를 두고 버튼을 눌러요.
+            <ul class="dots">
+              <li><span class="k">+ 이름</span>을 누르면 <b>{이름}</b>이 들어가요. “{이름}님” → “김철수님”</li>
+              <li><span class="k">+ 이름아/야</span>를 누르면 <b>{이름아}</b>가 들어가요. “철수야”, “길동아”처럼 부르는 말이 돼요.</li>
+            </ul></div></li>
+          <li><div>아래 <b>미리보기</b>에서 실제로 어떻게 갈지 확인해요. 청첩장 주소는 문구 아래 한 줄 띄우고 자동으로 붙어요.</div></li>
+          <li><div><span class="k">다음: 받는 사람 고르기</span>를 눌러요.</div></li>
+        </ol>
+        <div class="tip">어르신께 보낼 문구와 친구에게 보낼 문구가 다르면, 한 번에 한 문구씩 보내면 돼요. 어르신들 먼저 다 보내고 나면 처음 화면으로 돌아오니, 그때 친구용 문구를 새로 쓰면 돼요.</div>
+      </div>
+      <div class="shots">
+        <figure style="margin:0"><div class="phone sm"><div class="scr" data-screen="compose"></div></div><figcaption>1단계 화면</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="chap" id="step2">
+      <div class="txt">
+        <div class="tag">2단계 / 3</div>
+        <h2>받는 사람 고르기</h2>
+        <ol class="steps">
+          <li><div>처음에는 <span class="k">연락처 권한 허용</span>을 누르고 <span class="k">허용</span>을 눌러요. 연락처는 폰 안에서만 쓰고 밖으로 보내지 않아요.</div></li>
+          <li><div>보낼 사람 옆 네모를 눌러 체크해요.</div></li>
+          <li><div>사람이 많으면 위 검색 칸을 써요. 이름, 초성(예: <b>ㄱㅊㅅ</b>), 전화번호 일부로 찾을 수 있어요.</div></li>
+          <li><div>위의 <b>전체 / 고른 사람 / 안 보낸 사람</b>을 누르면 목록이 걸러져요. 이미 보낸 사람은 이름 옆에 <b>“11/9 보냄 ✓”</b>가 붙어요.</div></li>
+          <li><div><span class="k">화면 전체 선택</span>은 지금 보이는 사람을 한꺼번에 체크해요. 검색한 다음 누르면 편해요.</div></li>
+          <li><div>다 골랐으면 <span class="k">다음: 미리보기 (N명)</span>을 눌러요.</div></li>
+        </ol>
+        <div class="tip">엑셀 파일이 필요하면 오른쪽 위 <b>⋮ → 엑셀로 저장</b>을 누르세요. 보낼 사람만, 또는 전체 연락처를 저장할 수 있어요.</div>
+      </div>
+      <div class="shots">
+        <figure style="margin:0"><div class="phone sm"><div class="scr" data-screen="select"></div></div><figcaption>2단계 화면</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="chap" id="step3">
+      <div class="txt">
+        <div class="tag">3단계 / 3</div>
+        <h2>확인하고 고치기</h2>
+        <ol class="steps">
+          <li><div>고른 사람마다 <b>실제로 갈 문자</b>가 카드로 보여요. 한 번씩 훑어보세요.</div></li>
+          <li><div>한 사람만 다르게 보내고 싶으면 카드나 <span class="k">문구 고치기</span>를 눌러요.
+            <ul class="dots">
+              <li><b>문자에서 부를 이름</b>: 연락처에 “김철수 부장”으로 저장돼 있어도 “철수”로 바꿀 수 있어요. 다음에도 기억해요.</li>
+              <li><b>이 사람에게 보낼 문구</b>: 이 사람에게만 다른 말을 덧붙일 수 있어요. <b>공통 문구로 되돌리기</b>로 원래대로 돌아가요.</li>
+            </ul></div></li>
+          <li><div>빼고 싶은 사람은 빨간 <span class="k">삭제</span>를 눌러요. 이번 목록에서만 빠지고 폰 연락처는 지워지지 않아요. 잘못 눌렀으면 아래에 잠깐 뜨는 <span class="k">되돌리기</span>를 누르세요.</div></li>
+        </ol>
+      </div>
+      <div class="shots">
+        <figure style="margin:0"><div class="phone sm"><div class="scr" data-screen="review"></div></div><figcaption>3단계 화면</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="chap" id="send">
+      <div class="txt">
+        <div class="tag">마지막</div>
+        <h2>한꺼번에 보내기</h2>
+        <ol class="steps">
+          <li><div><span class="k">N명에게 모두 보내기</span>를 눌러요.</div></li>
+          <li><div>처음에는 문자 권한을 물어요. <span class="k">허용</span>을 눌러요. 막혀 있다는 안내가 나오면 아래 “문자 권한이 막혀 있어요”를 보세요.</div></li>
+          <li><div>“N명에게 보낼까요?”에서 <span class="k">보내기</span>를 눌러요. 한 명씩 약 3초 간격으로 보내요. 50명이면 3분쯤 걸려요.</div></li>
+          <li><div>보내는 동안에는 <b>앱 화면을 켜 둔 채</b> 기다려 주세요. 중간에 멈추려면 <span class="k">중지</span>를 눌러요.</div></li>
+          <li><div>다 보내면 <b>“N명에게 전송했습니다”</b>가 떠요. <span class="k">새로 시작</span>을 누르면 문구 칸이 비워진 1단계로 돌아가요. 다른 사람들에게 다른 문구로 보낼 때 쓰세요.</div></li>
+        </ol>
+        <div class="note"><b>꼭 먼저 해 보세요.</b> 처음에는 아버지 본인이나 가족 한 명만 골라서 보내 보고, 문자가 제대로 오는지(이름, 줄바꿈, 청첩장 주소) 확인한 다음 여러 명에게 보내세요.</div>
+      </div>
+      <div class="shots">
+        <figure style="margin:0"><div class="phone sm"><div class="scr" data-screen="sending"></div></div><figcaption>보내는 중</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="chap" id="faq" style="grid-template-columns:1fr">
+      <div class="txt">
+        <div class="tag">문제가 생기면</div>
+        <h2>자주 막히는 곳</h2>
+        <div>
+          <details open>
+            <summary>문자 권한이 막혀 있어요 (“제한된 설정”)</summary>
+            <div>
+              <p>안드로이드 13 이상에서는 플레이스토어에서 받지 않은 앱의 문자 권한을 막아 두기도 해요. 앱에서 안내 창이 뜨면 이렇게 풀어 주세요.</p>
+              <ol class="steps">
+                <li><div>안내 창에서 <span class="k">설정 열기</span>를 눌러요.</div></li>
+                <li><div>오른쪽 위 <b>⋮</b>를 누르고 <span class="k">제한된 설정 허용</span>을 눌러요. (이 메뉴가 없으면 건너뛰어요.)</div></li>
+                <li><div><b>권한 → SMS</b>로 들어가 <span class="k">허용</span>을 골라요.</div></li>
+                <li><div>앱으로 돌아와 <b>모두 보내기</b>를 다시 눌러요.</div></li>
+              </ol>
+            </div>
+          </details>
+          <details>
+            <summary>설치가 안 돼요 / “차단됨”이라고 나와요</summary>
+            <div>
+              <p>Play 프로텍트 경고에서 <b>세부정보 더보기</b>를 펼치면 <b>무시하고 설치</b>가 나와요. 그래도 안 되면 <b>설정 → 애플리케이션 → (주소를 연 앱, 예: Chrome·삼성 인터넷) → 출처를 알 수 없는 앱 설치</b>에서 허용을 켜 주세요.</p>
+            </div>
+          </details>
+          <details>
+            <summary>몇 명이 “실패”로 나왔어요</summary>
+            <div>
+              <p>못 보낸 사람은 3단계 목록에 그대로 남아 있어요. 신호가 좋은 곳에서 <b>모두 보내기</b>를 다시 누르면 남은 사람에게만 보내요. 계속 실패하면 번호가 바뀌었을 수 있으니 연락처를 확인해 주세요.</p>
+            </div>
+          </details>
+          <details>
+            <summary>같은 사람에게 두 번 보낼까 걱정돼요</summary>
+            <div>
+              <p>보낸 사람은 2단계 목록에 <b>“날짜 보냄 ✓”</b>가 붙어요. <b>안 보낸 사람</b> 버튼으로 아직 안 보낸 사람만 볼 수 있어요. 보낼 때도 “이 중 N명은 전에 보낸 적이 있어요”라고 알려 줘요.</p>
+            </div>
+          </details>
+          <details>
+            <summary>문자 요금이 나오나요?</summary>
+            <div>
+              <p>폰에서 직접 보내는 일반 문자라 요금제에 포함된 문자 수가 쓰여요. 문구가 길면 문자 여러 통으로 나뉘어 갈 수 있으니, 요금제가 문자 무제한이 아니라면 미리 확인해 주세요.</p>
+            </div>
+          </details>
+          <details>
+            <summary>보낸 문자는 어디서 볼 수 있나요?</summary>
+            <div>
+              <p>기본 문자 앱에 보낸 문자로 남는 경우가 많지만, 폰 기종에 따라 안 보일 수 있어요. 앱의 엑셀 저장(2단계 ⋮ 메뉴)에는 사람마다 보낸 시각과 마지막으로 보낸 문자가 들어가요.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>앱 버전 2.2 기준 · 2026년 11월 9일 작성</footer>
+</div>
+
+<script>
+(function () {
+  var LINK = "https://mcard.example/hong-wedding";
+  var MSG_FRIEND = "{이름아} 오랜만에 연락한다.\n우리 아들이 결혼을 한다고 해서 연락했어.\n청첩장을 만나서 줘야 하는데 만나지 못해서 모바일 청첩장으로 보낸다.";
+  function msgFor(name) {
+    return MSG_FRIEND.replace("{이름아}", name + (hasBatchim(name) ? "아" : "야"));
+  }
+  function hasBatchim(s) {
+    var c = s.charCodeAt(s.length - 1);
+    return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0;
+  }
+  function esc(s) { return s.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function H(k, key) { return k === key ? " hl" : ""; }
+  var sb = '<div class="sb"><span>12:30</span><span>▮▮▮ 85%</span></div>';
+  var tb = function (menu) { return '<div class="tb"><span>청첩장 연락처</span><span>' + (menu ? '⋮' : '') + '</span></div>'; };
+
+  var S = {
+    download: function (h) {
+      return sb + '<div class="addr">github.com/HongGeunPark/SendWeddingSMS/…</div>' +
+        '<div class="body"><div class="lbl">파일 다운로드</div><div class="cnt">링크를 누르면 아래에 안내가 떠요.</div></div>' +
+        '<div class="sheet"><div class="lbl">SendWeddingSMS.apk</div><div class="cnt">이 유형의 파일은 기기를 손상시킬 수 있습니다. 그래도 다운로드할까요?</div>' +
+        '<div class="row"><span class="sp"></span><span class="ob">취소</span><span class="ob' + H(h, "dl") + '" style="background:#D81B60;color:#fff">다운로드</span></div>' +
+        '<div class="row" style="border-top:1px solid #e6e0e3;padding-top:8px"><span class="cnt">다운로드 완료</span><span class="sp"></span><span class="ob' + H(h, "open") + '">열기</span></div></div>';
+    },
+    unknown: function (h) {
+      return sb + '<div class="set-h">← 출처를 알 수 없는 앱 설치</div>' +
+        '<div class="body"><div class="row" style="gap:10px"><div style="width:26px;height:26px;border-radius:50%;background:#e8e3e6"></div><div class="sp"><div class="lbl">Chrome</div><div class="cnt">다운로드한 앱 설치</div></div></div>' +
+        '<div class="li' + H(h, "tg") + '" style="border-top:1px solid #e6e0e3"><div class="sp"><div class="n">이 출처 허용</div></div><div class="tg"></div></div>' +
+        '<div class="help">이 출처에서 받은 앱을 설치하면 휴대전화와 개인 데이터가 위험해질 수 있어요.</div></div>';
+    },
+    install: function (h) {
+      return sb + '<div class="body" style="justify-content:flex-end;padding-bottom:20px">' +
+        '<div class="dlg"><div class="row"><div style="width:22px;height:22px;border-radius:6px;background:#D81B60"></div><b>청첩장 연락처</b></div>' +
+        '<div class="x">이 앱을 설치하시겠습니까?</div><div class="bt"><span>취소</span><span class="' + H(h, "ok").trim() + '">설치</span></div></div>' +
+        '<div class="dlg" style="margin-top:8px"><div class="h">Play 프로텍트에서 차단함</div><div class="x">알 수 없는 개발자의 앱입니다.</div>' +
+        '<div class="x" style="color:#6b6468">세부정보 더보기 ⌄</div><div class="bt"><span class="' + H(h, "ig").trim() + '">무시하고 설치</span><span>확인</span></div></div></div>';
+    },
+    compose: function (h, filled) {
+      var msg = filled ? esc(MSG_FRIEND) : "";
+      var prev = filled ? esc(msgFor("홍길동")) + "\n\n" + LINK : "문구를 쓰면 여기에 미리보기가 나와요.";
+      return sb + tb() + '<div class="sh">1단계 / 3 · 보낼 문구 쓰기</div><div class="body">' +
+        '<div class="lbl">모바일 청첩장 주소</div><div class="inp">' + LINK + '</div>' +
+        '<div class="row" style="margin-top:4px"><div class="lbl sp">이번에 보낼 문구</div><span class="ob' + H(h, "ex") + '">예시 문구 불러오기</span></div>' +
+        '<div class="help">• <b>+ 이름</b>: {이름}님 → 김철수님<br>• <b>+ 이름아/야</b>: {이름아} → 철수야</div>' +
+        '<div class="row"><span class="tn' + H(h, "nm") + '">+ 이름</span><span class="tn">+ 이름아/야</span></div>' +
+        '<div class="inp multi">' + (msg || '<span style="color:#9a9397">예: {이름}님, 저희 아들이 결혼하게 되어…</span>') + '</div>' +
+        '<div class="lbl" style="font-size:10px">미리보기 (홍길동님께 보낼 때)</div><div class="pv">' + prev + '</div></div>' +
+        '<div class="pb' + H(h, "next") + '">다음: 받는 사람 고르기</div>';
+    },
+    examples: function (h) {
+      return S.compose("", false) + '<div class="dim"><div class="dlg"><div class="h">예시 문구 고르기</div>' +
+        '<div class="opt"><b>어르신·윗분께</b>{이름}님, 그간 평안하셨습니까…</div>' +
+        '<div class="opt' + H(h, "fr") + '"><b>친구·오랜 지인에게</b>{이름아} 오랜만에 연락한다…</div>' +
+        '<div class="opt"><b>직원·후배에게</b>{이름}님, 잘 지내고 있지요?…</div>' +
+        '<div class="opt"><b>거래처에</b>{이름}님, 안녕하세요. 늘 신경 써…</div>' +
+        '<div class="bt"><span>취소</span></div></div></div>';
+    },
+    select: function (h) {
+      var people = [["김철수", "010-1234-5678", true, ""], ["박영희", "010-2222-3333", true, ""], ["이민수", "010-4444-5555", false, "  · 11/9 보냄 ✓"], ["정길동", "010-6666-7777", true, ""], ["최수진", "010-8888-9999", false, ""], ["한상우", "010-1212-3434", false, ""]];
+      var rows = people.map(function (p, i) {
+        return '<div class="li"><div class="cb' + (p[2] ? " on" : "") + (i === 3 ? H(h, "cb") : "") + '">' + (p[2] ? "✓" : "") + '</div><div><div class="n">' + p[0] + '</div><div class="s">' + p[1] + p[3] + '</div></div></div>';
+      }).join("");
+      return sb + tb(true) + '<div class="sh">2단계 / 3 · 받는 사람 고르기</div><div class="body">' +
+        '<div class="srch">🔍 이름, 초성(ㅎㄱㄷ), 번호로 검색</div>' +
+        '<div class="chips"><span class="chip on">전체</span><span class="chip">고른 사람</span><span class="chip">안 보낸 사람</span></div>' +
+        '<div class="cnt">고른 사람 3명 / 전체 142명</div>' + rows +
+        '<div class="row"><span class="tn">화면 전체 선택</span><span class="tn">화면 전체 해제</span></div></div>' +
+        '<div class="pb' + H(h, "next") + '">다음: 미리보기 (3명)</div>';
+    },
+    review: function (h, snack) {
+      var cards = [["김철수", "", "철수"], ["박영희", "따로 고친 문구", "영희"], ["정길동", "", "정길동"]].map(function (c, i) {
+        return '<div class="card"><div class="n">' + c[0] + '</div>' + (c[1] ? '<div class="m">' + c[1] + '</div>' : '') +
+          '<div class="t">' + esc(msgFor(c[2])) + '</div>' +
+          '<div class="acts"><span class="del' + (i === 2 ? H(h, "del") : "") + '">삭제</span><span class="ob' + (i === 0 ? H(h, "edit") : "") + '">문구 고치기</span></div></div>';
+      });
+      if (snack) cards.pop();
+      return sb + tb() + '<div class="sh">3단계 / 3 · 확인하고 보내기</div><div class="body">' +
+        '<div class="cnt">' + (snack ? 2 : 3) + '명에게 보내요. 카드를 누르면 그 사람 문구만 고칠 수 있어요.</div>' + cards.join("") + '</div>' +
+        (snack ? '<div class="snack"><span>정길동 삭제했어요</span><b>되돌리기</b></div>' : '') +
+        '<div class="pb' + H(h, "send") + '">' + (snack ? 2 : 3) + '명에게 모두 보내기</div>';
+    },
+    edit: function (h) {
+      return S.review("") + '<div class="dim"><div class="dlg"><div class="h">김철수님께 보낼 문자</div>' +
+        '<div class="lbl" style="font-size:9.5px">문자에서 부를 이름 (비우면 연락처 이름)</div><div class="inp' + H(h, "call") + '">철수</div>' +
+        '<div class="lbl" style="font-size:9.5px">이 사람에게 보낼 문구</div><div class="inp multi" style="min-height:40px;font-size:9px">' + esc(MSG_FRIEND) + '</div>' +
+        '<div class="row"><span class="tn">+ 이름</span><span class="tn">+ 이름아/야</span></div>' +
+        '<div class="bt"><span>취소</span><span class="' + H(h, "save").trim() + '">저장</span></div></div></div>';
+    },
+    confirm: function (h) {
+      return S.review("") + '<div class="dim"><div class="dlg"><div class="h">3명에게 보낼까요?</div>' +
+        '<div class="x">한 명씩 약 3초 간격으로 보내서 1분쯤 걸려요. 보내는 동안 이 화면을 켜 두세요.</div>' +
+        '<div class="bt"><span>취소</span><span class="' + H(h, "go").trim() + '">보내기</span></div></div></div>';
+    },
+    sending: function (h) {
+      return S.review("") + '<div class="dim"><div class="dlg"><div class="h">보내는 중</div>' +
+        '<div class="x">2 / 3\n박영희님께 보내는 중…\n\n보냄 1명</div><div class="bar"><i style="width:55%"></i></div>' +
+        '<div class="bt"><span>중지</span></div></div></div>';
+    },
+    done: function (h) {
+      return S.review("") + '<div class="dim"><div class="dlg"><div class="h">3명에게 전송했습니다</div>' +
+        '<div class="x">이번 문구는 끝났어요. 다른 사람들에게 다른 문구로 보내려면 새로 시작을 누르세요.</div>' +
+        '<div class="bt"><span>닫기</span><span class="' + H(h, "new").trim() + '">새로 시작</span></div></div></div>';
+    }
+  };
+
+  var slides = [
+    ["download", "dl", "앱 받기", "폰에서 앱 받는 주소를 열면 다운로드 안내가 떠요. 다운로드를 눌러요."],
+    ["download", "open", "파일 열기", "다 받아지면 열기를 눌러요. 못 찾으면 내 파일 → 다운로드에서 눌러도 돼요."],
+    ["unknown", "tg", "설치 허용", "‘출처를 알 수 없는 앱’ 안내가 나오면 설정에서 이 출처 허용을 켜고 뒤로 가요."],
+    ["install", "ok", "설치", "설치를 눌러요. Play 프로텍트 경고가 나오면 세부정보 더보기 → 무시하고 설치를 눌러요."],
+    ["compose", "ex", "1단계: 문구 쓰기", "청첩장 주소를 넣고, 예시 문구 불러오기를 눌러요."],
+    ["examples", "fr", "예시 문구 고르기", "보낼 사람에게 맞는 예시를 골라요. 불러온 뒤 자유롭게 고쳐도 돼요."],
+    ["compose:filled", "next", "미리보기 확인", "아래 미리보기에서 이름과 청첩장 주소가 잘 붙었는지 보고 다음을 눌러요."],
+    ["select", "cb", "2단계: 받는 사람 고르기", "보낼 사람을 체크해요. 검색 칸에 초성이나 번호를 넣어 찾을 수 있어요."],
+    ["select", "next", "다 골랐으면", "다음: 미리보기를 눌러요."],
+    ["review", "edit", "3단계: 확인하기", "사람마다 실제로 갈 문자가 보여요. 문구 고치기로 한 사람만 바꿀 수 있어요."],
+    ["edit", "call", "부를 이름 바꾸기", "‘김철수’ 대신 ‘철수’처럼 부를 이름을 바꾸고 저장을 눌러요."],
+    ["confirm", "go", "모두 보내기", "모두 보내기 → 보내기를 누르면 한 명씩 약 3초 간격으로 바로 보내요."],
+    ["done", "new", "보내기 끝", "다 보내면 ‘전송했습니다’가 떠요. 새로 시작을 누르면 다음 문구를 쓸 수 있어요."]
+  ];
+
+  function render(name, h) {
+    var parts = name.split(":");
+    return S[parts[0]](h || "", parts[1] === "filled");
+  }
+
+  // inline chapter screens
+  var inline = { unknown: ["unknown", "tg"], compose: ["compose:filled", "ex"], select: ["select", "cb"], review: ["review", "del"], sending: ["sending", ""] };
+  document.querySelectorAll("[data-screen]").forEach(function (el) {
+    var c = inline[el.getAttribute("data-screen")];
+    el.innerHTML = render(c[0], c[1]);
+  });
+
+  // player
+  var scr = document.getElementById("pScr"), num = document.getElementById("pNum"),
+      title = document.getElementById("pTitle"), text = document.getElementById("pText"),
+      segs = document.getElementById("pSegs"), playBtn = document.getElementById("pPlay");
+  var DUR = 5000, idx = 0, playing = true, t0 = 0, elapsed = 0, raf = 0;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) playing = false;
+
+  slides.forEach(function (s, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.setAttribute("aria-label", (i + 1) + "번 화면: " + s[2]);
+    b.innerHTML = "<i></i>";
+    b.addEventListener("click", function () { go(i); });
+    segs.appendChild(b);
+  });
+
+  function show() {
+    var s = slides[idx];
+    scr.innerHTML = render(s[0], s[1]);
+    scr.classList.remove("fade"); void scr.offsetWidth; scr.classList.add("fade");
+    num.textContent = (idx + 1) + " / " + slides.length;
+    title.textContent = s[2];
+    text.textContent = s[3];
+    Array.prototype.forEach.call(segs.children, function (b, i) {
+      b.classList.toggle("done", i < idx);
+      b.firstChild.style.width = i < idx ? "100%" : "0";
+    });
+  }
+  function go(i) { idx = (i + slides.length) % slides.length; elapsed = 0; t0 = performance.now(); show(); }
+  function tick(now) {
+    if (playing) {
+      var e = elapsed + (now - t0);
+      var bar = segs.children[idx].firstChild;
+      bar.style.width = Math.min(100, e / DUR * 100) + "%";
+      if (e >= DUR) {
+        if (idx === slides.length - 1) { setPlaying(false); elapsed = 0; }
+        else go(idx + 1);
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function setPlaying(p) {
+    var now = performance.now();
+    if (playing && !p) elapsed += now - t0;
+    if (!playing && p) { t0 = now; if (idx === slides.length - 1 && elapsed === 0) go(0); }
+    playing = p;
+    playBtn.textContent = p ? "⏸ 멈춤" : "▶ 재생";
+  }
+  playBtn.addEventListener("click", function () { setPlaying(!playing); });
+  document.getElementById("pPrev").addEventListener("click", function () { go(idx - 1); });
+  document.getElementById("pNext").addEventListener("click", function () { go(idx + 1); });
+  t0 = performance.now();
+  show();
+  setPlaying(playing);
+  raf = requestAnimationFrame(tick);
+
+  // copy
+  var copyBtn = document.getElementById("copyBtn");
+  copyBtn.addEventListener("click", function () {
+    var url = document.getElementById("apkUrl").textContent;
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById("apkUrl"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      copyBtn.textContent = "선택됨, 길게 눌러 복사";
+    }
+    try {
+      navigator.clipboard.writeText(url).then(function () { copyBtn.textContent = "복사했어요"; }, fallback);
+    } catch (e) { fallback(); }
+  });
+})();
+</script>
+</body>
+</html>
