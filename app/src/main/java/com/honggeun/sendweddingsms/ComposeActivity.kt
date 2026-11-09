@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 
@@ -35,6 +36,7 @@ class ComposeActivity : AppCompatActivity() {
         linkInput.doAfterTextChanged { update() }
         messageInput.doAfterTextChanged { update() }
         PlaceholderButtons.bind(findViewById(android.R.id.content), messageInput)
+        findViewById<Button>(R.id.loadExample).setOnClickListener { pickExample() }
 
         nextButton.setOnClickListener {
             val msg = messageInput.text.toString().trim()
@@ -70,5 +72,32 @@ class ComposeActivity : AppCompatActivity() {
         val link = linkInput.text.toString().ifBlank { "(청첩장 주소)" }
         preview.text = if (msg.isBlank()) "문구를 쓰면 여기에 미리보기가 나와요." else MessageRenderer.render(msg, "홍길동", link)
         nextButton.isEnabled = msg.isNotBlank()
+    }
+
+    private fun pickExample() {
+        val examples = ExampleMessages.all
+        val labels = examples.map { "${it.title}\n${MessageRenderer.render(it.text, "김철수", "").lines().first()}…" }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("예시 문구 고르기")
+            .setItems(labels) { _, which -> applyExample(examples[which].text) }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun applyExample(text: String) {
+        val replace = {
+            messageInput.setText(text)
+            messageInput.setSelection(messageInput.text.length)
+            save()
+        }
+        if (messageInput.text.isBlank()) {
+            replace()
+        } else {
+            AlertDialog.Builder(this)
+                .setMessage("지금 쓴 문구를 지우고 예시 문구로 바꿀까요?")
+                .setPositiveButton("바꾸기") { _, _ -> replace() }
+                .setNegativeButton("취소", null)
+                .show()
+        }
     }
 }

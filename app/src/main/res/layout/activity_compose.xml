@@ -42,13 +42,40 @@
                 android:importantForAutofill="no"
                 android:inputType="textUri" />
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="이번에 보낼 문구"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="이번에 보낼 문구"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/loadExample"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="예시 문구 불러오기" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@color/pink_light"
+                android:lineSpacingExtra="2dp"
+                android:padding="12dp"
+                android:text="@string/placeholder_help"
+                android:textSize="14sp" />
+
+            <include layout="@layout/dialog_placeholders" />
 
             <EditText
                 android:id="@+id/messageInput"
@@ -60,14 +87,6 @@
                 android:inputType="textMultiLine|textCapSentences"
                 android:minLines="6" />
 
-            <include layout="@layout/dialog_placeholders" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="{이름}은 받는 사람 이름으로, {이름아}는 '철수야/길동아'처럼 바뀌어요. 청첩장 주소는 문구 아래에 한 줄 띄우고 붙어요."
-                android:textSize="14sp" />
 
             <TextView
                 android:layout_width="wrap_content"
