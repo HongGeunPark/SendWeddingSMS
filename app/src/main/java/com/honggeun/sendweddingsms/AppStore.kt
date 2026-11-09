@@ -37,10 +37,10 @@ class AppStore(context: Context) {
         get() = prefs.getString("link", "") ?: ""
         set(value) = prefs.edit().putString("link", value.trim()).apply()
 
-    /** 자동 일괄 발송 사용 여부. 기본은 꺼짐(한 명씩 문자 앱으로 보내기). */
-    var autoSend: Boolean
-        get() = prefs.getBoolean("auto_send", false)
-        set(value) = prefs.edit().putBoolean("auto_send", value).apply()
+    /** 미리보기 화면에 "한꺼번에 보내기" 버튼을 보일지. 기본은 보임. */
+    var bulkSend: Boolean
+        get() = prefs.getBoolean("bulk_send", true)
+        set(value) = prefs.edit().putBoolean("bulk_send", value).apply()
 
     fun formats(): List<MessageFormat> {
         val raw = prefs.getString("formats", null) ?: return MessageRenderer.DEFAULT_FORMATS

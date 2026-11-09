@@ -108,7 +108,7 @@
             android:layout_height="64dp"
             android:layout_margin="4dp"
             android:layout_weight="1"
-            android:text="다음 사람에게 문자 보내기"
+            android:text="다음 사람에게 보내기"
             android:textSize="16sp" />
 
         <Button
@@ -118,7 +118,7 @@
             android:layout_height="64dp"
             android:layout_margin="4dp"
             android:layout_weight="1"
-            android:text="자동 발송"
+            android:text="안 보낸 사람 모두 보내기"
             android:textSize="16sp"
             android:visibility="gone" />
     </LinearLayout>

@@ -48,9 +48,16 @@ class PreviewActivity : AppCompatActivity() {
     private lateinit var autoSendButton: Button
     private var sender: AutoSender? = null
 
+    /** 문자 권한을 받은 뒤 이어서 할 일. */
+    private var afterPermission: (() -> Unit)? = null
+    /** 권한이 없을 때 문자 앱으로 대신 보낼 사람(한 명 보내기일 때만). */
+    private var fallbackEntry: ContactEntry? = null
+
     private val smsPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) confirmAutoSend() else showSmsPermissionHelp()
+            val action = afterPermission
+            afterPermission = null
+            if (granted) action?.invoke() else showSmsPermissionHelp(fallbackEntry)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,13 +119,7 @@ class PreviewActivity : AppCompatActivity() {
         }
 
         autoSendButton = findViewById(R.id.autoSend)
-        autoSendButton.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
-                confirmAutoSend()
-            } else {
-                smsPermission.launch(Manifest.permission.SEND_SMS)
-            }
-        }
+        autoSendButton.setOnClickListener { withSmsPermission(null) { confirmAutoSend() } }
 
         if (ContactCache.entries.isEmpty()) {
             // 앱이 백그라운드에서 정리된 뒤 다시 열린 경우
@@ -138,7 +139,7 @@ class PreviewActivity : AppCompatActivity() {
         formats = store.formats()
         link = store.link
         linkWarning.visibility = if (link.isBlank()) View.VISIBLE else View.GONE
-        autoSendButton.visibility = if (store.autoSend) View.VISIBLE else View.GONE
+        autoSendButton.visibility = if (store.bulkSend) View.VISIBLE else View.GONE
         val labels = listOf(getString(R.string.all_formats)) + formats.map { it.name }
         formatFilter.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, labels)
         val idx = formats.indexOfFirst { it.name == formatFilterName }
@@ -164,8 +165,18 @@ class PreviewActivity : AppCompatActivity() {
         countText.text = "보낼 사람 ${selected.size}명 · 보냄 ${sent}명 · 남음 ${selected.size - sent}명"
     }
 
-    private fun showSmsPermissionHelp() {
-        AlertDialog.Builder(this)
+    private fun withSmsPermission(entry: ContactEntry?, action: () -> Unit) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+            action()
+        } else {
+            afterPermission = action
+            fallbackEntry = entry
+            smsPermission.launch(Manifest.permission.SEND_SMS)
+        }
+    }
+
+    private fun showSmsPermissionHelp(entry: ContactEntry?) {
+        val b = AlertDialog.Builder(this)
             .setTitle("문자 권한이 필요해요")
             .setMessage(R.string.restricted_help)
             .setPositiveButton("설정 열기") { _, _ ->
@@ -174,7 +185,11 @@ class PreviewActivity : AppCompatActivity() {
                 )
             }
             .setNegativeButton("취소", null)
-            .show()
+        if (entry != null) {
+            // 권한을 못 풀었을 때를 위해 예전 방식(문자 앱 열기)도 남겨 둔다.
+            b.setNeutralButton("문자 앱으로 보내기") { _, _ -> openInSmsApp(entry) }
+        }
+        b.show()
     }
 
     /** 지금 화면에 보이는 사람 중 안 보낸 사람에게 자동으로 보낸다. */
@@ -190,6 +205,7 @@ class PreviewActivity : AppCompatActivity() {
             return
         }
         val minutes = (targets.size * (AutoSender.DELAY_MS / 1000.0 + 1) / 60).let { if (it < 1) 1 else Math.ceil(it).toInt() }
+        if (sender != null) return
         val names = targets.take(5).joinToString(", ") { it.name } + if (targets.size > 5) " 외 ${targets.size - 5}명" else ""
         AlertDialog.Builder(this)
             .setTitle("${targets.size}명에게 자동으로 보낼까요?")
@@ -239,6 +255,9 @@ class PreviewActivity : AppCompatActivity() {
                 if (!isFinishing && !isDestroyed) {
                     progress.dismiss()
                     refresh()
+                    Toast.makeText(this, "${sent}명에게 전송했습니다", Toast.LENGTH_LONG).show()
+                }
+                if (!isFinishing && !isDestroyed && (stopped || failed.isNotEmpty())) {
                     val msg = buildString {
                         append(if (stopped) "중지했어요.\n" else "다 보냈어요.\n")
                         append("보냄 ${sent}명")
@@ -259,7 +278,48 @@ class PreviewActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    /** 한 명에게 바로 보낸다. 이미 보낸 사람이면 한 번 더 묻는다. */
     private fun send(e: ContactEntry) {
+        if (sender != null) {
+            Toast.makeText(this, "보내는 중이에요. 잠시만 기다려 주세요", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (e.sentAt > 0) {
+            AlertDialog.Builder(this)
+                .setMessage("${e.name}님께는 이미 보냈어요. 한 번 더 보낼까요?")
+                .setPositiveButton("보내기") { _, _ -> withSmsPermission(e) { sendNow(e) } }
+                .setNegativeButton("취소", null)
+                .show()
+        } else {
+            withSmsPermission(e) { sendNow(e) }
+        }
+    }
+
+    private fun sendNow(e: ContactEntry) {
+        val body = MessageRenderer.messageFor(e, formats, link)
+        val s = AutoSender(this)
+        sender = s
+        Toast.makeText(this, "${e.name}님께 보내는 중…", Toast.LENGTH_SHORT).show()
+        s.start(
+            listOf(e to body),
+            onProgress = { _, _, _ -> },
+            onResult = { entry, ok ->
+                if (ok) {
+                    entry.sentAt = System.currentTimeMillis()
+                    store.save(listOf(entry))
+                }
+                val text = if (ok) "${entry.name}님께 전송했습니다" else "${entry.name}님께 보내지 못했어요. 번호나 신호를 확인해 주세요"
+                Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+            },
+            onFinish = { _, _, _ ->
+                sender = null
+                if (!isFinishing && !isDestroyed) refresh()
+            },
+        )
+    }
+
+    /** 문자 권한을 쓸 수 없을 때만 쓰는 예전 방식. */
+    private fun openInSmsApp(e: ContactEntry) {
         val body = MessageRenderer.messageFor(e, formats, link)
         if (Sms.open(this, e.phone, body)) {
             // 문자 앱에서 실제로 전송했는지는 알 수 없어서, 연 순간 "보냄"으로 표시한다. 잘못 눌렀으면 다시 눌러 취소할 수 있다.
@@ -306,7 +366,7 @@ class PreviewAdapter(
         holder.meta.text = "${e.phone} · ${formatLabel(e)}$custom"
         holder.message.text = message(e)
         holder.toggleSent.text = if (sent) "보냄 취소" else "보냄 표시"
-        holder.send.text = if (sent) "다시 보내기" else "문자 보내기"
+        holder.send.text = if (sent) "다시 보내기" else "보내기"
         holder.edit.setOnClickListener { onEdit(e) }
         holder.toggleSent.setOnClickListener { onToggleSent(e) }
         holder.send.setOnClickListener { onSend(e) }
