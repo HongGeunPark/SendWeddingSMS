@@ -51,6 +51,9 @@ class TemplatesActivity : AppCompatActivity() {
             v.findViewById<TextView>(R.id.formatName).text = if (i == 0) "${f.name}  (기본값)" else f.name
             v.findViewById<TextView>(R.id.formatText).text = MessageRenderer.render(f.text, "홍길동", sampleLink)
             v.setOnClickListener { editFormat(i) }
+            v.findViewById<Button>(R.id.pickMembers).setOnClickListener {
+                startActivity(FormatMembersActivity.intent(this, f.name))
+            }
             formatsBox.addView(v)
         }
     }
