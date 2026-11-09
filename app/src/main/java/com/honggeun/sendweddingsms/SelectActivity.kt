@@ -96,8 +96,8 @@ class SelectActivity : AppCompatActivity() {
             }
             refresh()
         }
-        findViewById<Button>(R.id.selectVisible).setOnClickListener { setVisible(true) }
-        findViewById<Button>(R.id.clearVisible).setOnClickListener { setVisible(false) }
+        findViewById<Button>(R.id.selectVisible).setOnClickListener { markVisible(true) }
+        findViewById<Button>(R.id.clearVisible).setOnClickListener { markVisible(false) }
         permissionButton.setOnClickListener { requestOrOpenSettings() }
         nextButton.setOnClickListener {
             if (chosen.isEmpty()) {
@@ -199,7 +199,7 @@ class SelectActivity : AppCompatActivity() {
         store.draftSelected = chosen
     }
 
-    private fun setVisible(value: Boolean) {
+    private fun markVisible(value: Boolean) {
         val targets = visible.filter { (it.key in chosen) != value }
         if (targets.isEmpty()) return
         val apply = {
