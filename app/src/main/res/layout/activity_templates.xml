@@ -45,7 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="자동 일괄 발송 사용"
+                android:text="한꺼번에 보내기 버튼 사용"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 

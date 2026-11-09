@@ -34,8 +34,8 @@ class TemplatesActivity : AppCompatActivity() {
         linkInput.doAfterTextChanged { store.link = it?.toString() ?: "" }
 
         val autoSwitch = findViewById<MaterialSwitch>(R.id.autoSendSwitch)
-        autoSwitch.isChecked = store.autoSend
-        autoSwitch.setOnCheckedChangeListener { _, checked -> store.autoSend = checked }
+        autoSwitch.isChecked = store.bulkSend
+        autoSwitch.setOnCheckedChangeListener { _, checked -> store.bulkSend = checked }
 
         findViewById<Button>(R.id.addFormat).setOnClickListener { editFormat(-1) }
 
@@ -62,7 +62,7 @@ class TemplatesActivity : AppCompatActivity() {
         val textInput = view.findViewById<EditText>(R.id.formatTextInput)
         val preview = view.findViewById<TextView>(R.id.formatPreview)
         nameInput.setText(existing?.name ?: "")
-        textInput.setText(existing?.text ?: "{이름}님, \n{링크}")
+        textInput.setText(existing?.text ?: "{이름}님, ")
 
         fun update() {
             preview.text = MessageRenderer.render(textInput.text.toString(), "홍길동", store.link.ifBlank { "(청첩장 주소)" })
