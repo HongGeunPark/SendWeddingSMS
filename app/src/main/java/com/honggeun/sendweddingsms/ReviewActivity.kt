@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -135,11 +136,21 @@ class ReviewActivity : AppCompatActivity() {
             .show()
     }
 
+    /** 이번 보낼 목록에서만 지운다. 폰 연락처는 건드리지 않는다. */
     private fun remove(e: ContactEntry) {
+        val savedCustom = custom[e.key]
         store.draftSelected = store.draftSelected - e.key
         custom.remove(e.key)
         store.draftCustom = custom
         reload()
+        Snackbar.make(findViewById(android.R.id.content), "${e.name} 삭제했어요", Snackbar.LENGTH_LONG)
+            .setAction("되돌리기") {
+                store.draftSelected = store.draftSelected + e.key
+                if (savedCustom != null) custom[e.key] = savedCustom
+                store.draftCustom = custom
+                reload()
+            }
+            .show()
     }
 
     private fun showSmsPermissionHelp() {

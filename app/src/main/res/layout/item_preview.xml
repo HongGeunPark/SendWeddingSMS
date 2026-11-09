@@ -49,7 +49,8 @@
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="이 사람 빼기" />
+                android:text="삭제"
+                android:textColor="#D32F2F" />
 
             <Button
                 android:id="@+id/edit"
