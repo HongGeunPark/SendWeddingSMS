@@ -1,5 +1,6 @@
 package com.honggeun.sendweddingsms
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -26,7 +27,18 @@ class TemplatesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_templates)
         store = AppStore(this)
 
-        findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        if (isTaskRoot) {
+            // 앱 첫 화면으로 열렸을 때: 뒤로가기 화살표 대신 다음 화면 버튼을 보여 준다.
+            toolbar.navigationIcon = null
+            toolbar.title = "메시지 설정"
+            findViewById<Button>(R.id.goContacts).apply {
+                visibility = View.VISIBLE
+                setOnClickListener { startActivity(Intent(this@TemplatesActivity, MainActivity::class.java)) }
+            }
+        } else {
+            toolbar.setNavigationOnClickListener { finish() }
+        }
         linkInput = findViewById(R.id.linkInput)
         formatsBox = findViewById(R.id.formatsBox)
 
