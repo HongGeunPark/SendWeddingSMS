@@ -1,34 +1,31 @@
 package com.honggeun.sendweddingsms
 
 import android.content.Context
-import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 사람별 선택·형식·문구·보낸 기록, 형식 목록, 청첩장 주소를 폰에 저장한다.
- * 앱을 껐다 켜도 이어서 작업할 수 있다.
+ * 폰에 저장하는 것들.
+ * - 오래 기억: 청첩장 주소, 사람별 부를 이름, 보낸 기록
+ * - 이번 회차만: 쓰고 있는 문구, 고른 사람, 사람별로 고친 문구 (다 보내면 지워져서 새로 시작)
+ * 앱이 중간에 꺼져도 이번 회차를 이어서 할 수 있다.
  */
 class AppStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("selection", Context.MODE_PRIVATE)
 
     fun restore(entries: List<ContactEntry>) {
         for (e in entries) {
-            e.selected = prefs.getBoolean("sel_${e.key}", false)
-            e.format = prefs.getString("fmt_${e.key}", "") ?: ""
             e.callName = prefs.getString("call_${e.key}", "") ?: ""
-            e.customMessage = prefs.getString("msg_${e.key}", "") ?: ""
             e.sentAt = prefs.getLong("sent_${e.key}", 0L)
+            e.lastMessage = prefs.getString("last_${e.key}", "") ?: ""
         }
     }
 
-    fun save(entries: Collection<ContactEntry>) {
+    fun saveContacts(entries: Collection<ContactEntry>) {
         val edit = prefs.edit()
         for (e in entries) {
-            edit.putBoolean("sel_${e.key}", e.selected)
-            edit.putString("fmt_${e.key}", e.format)
             edit.putString("call_${e.key}", e.callName)
-            edit.putString("msg_${e.key}", e.customMessage)
             edit.putLong("sent_${e.key}", e.sentAt)
+            edit.putString("last_${e.key}", e.lastMessage)
         }
         edit.apply()
     }
@@ -37,38 +34,34 @@ class AppStore(context: Context) {
         get() = prefs.getString("link", "") ?: ""
         set(value) = prefs.edit().putString("link", value.trim()).apply()
 
-    /** 미리보기 화면에 "한꺼번에 보내기" 버튼을 보일지. 기본은 보임. */
-    var bulkSend: Boolean
-        get() = prefs.getBoolean("bulk_send", true)
-        set(value) = prefs.edit().putBoolean("bulk_send", value).apply()
+    // ---- 이번 회차 ----
 
-    fun formats(): List<MessageFormat> {
-        val raw = prefs.getString("formats", null) ?: return MessageRenderer.DEFAULT_FORMATS
-        return try {
-            val arr = JSONArray(raw)
-            val list = (0 until arr.length()).map {
-                val o = arr.getJSONObject(it)
-                MessageFormat(o.getString("name"), o.getString("text"))
+    var draftMessage: String
+        get() = prefs.getString("draft_msg", "") ?: ""
+        set(value) = prefs.edit().putString("draft_msg", value).apply()
+
+    var draftSelected: Set<String>
+        get() = prefs.getStringSet("draft_sel", emptySet())?.toSet() ?: emptySet()
+        set(value) = prefs.edit().putStringSet("draft_sel", HashSet(value)).apply()
+
+    var draftCustom: Map<String, String>
+        get() {
+            val raw = prefs.getString("draft_custom", null) ?: return emptyMap()
+            return try {
+                val o = JSONObject(raw)
+                o.keys().asSequence().associateWith { o.getString(it) }
+            } catch (e: Exception) {
+                emptyMap()
             }
-            list.ifEmpty { MessageRenderer.DEFAULT_FORMATS }
-        } catch (e: Exception) {
-            MessageRenderer.DEFAULT_FORMATS
         }
-    }
-
-    fun saveFormats(list: List<MessageFormat>) {
-        val arr = JSONArray()
-        for (f in list) arr.put(JSONObject().put("name", f.name).put("text", f.text))
-        prefs.edit().putString("formats", arr.toString()).apply()
-    }
-
-    /** 형식 이름을 바꾸거나 지울 때, 그 형식을 쓰던 사람들도 함께 바꾼다. */
-    fun replaceFormatInContacts(old: String, new: String) {
-        val edit = prefs.edit()
-        for ((k, v) in prefs.all) {
-            if (k.startsWith("fmt_") && v == old) edit.putString(k, new)
+        set(value) {
+            val o = JSONObject()
+            for ((k, v) in value) o.put(k, v)
+            prefs.edit().putString("draft_custom", o.toString()).apply()
         }
-        edit.apply()
-        ContactCache.entries.forEach { if (it.format == old) it.format = new }
+
+    /** 다 보낸 뒤 새로 시작할 때 이번 회차 내용을 지운다. 청첩장 주소와 보낸 기록은 남긴다. */
+    fun resetRound() {
+        prefs.edit().remove("draft_msg").remove("draft_sel").remove("draft_custom").apply()
     }
 }
