@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_members"
+        android:title="분류 정하기"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/action_templates"
         android:title="@string/menu_templates"
         app:showAsAction="always" />

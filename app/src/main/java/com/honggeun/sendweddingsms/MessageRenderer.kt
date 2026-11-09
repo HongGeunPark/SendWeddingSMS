@@ -44,7 +44,7 @@ object MessageRenderer {
     }
 
     /**
-     * 청첩장 주소는 항상 본문 맨 아래 줄에 붙인다.
+     * 청첩장 주소는 본문 아래에 빈 줄 하나를 두고 붙인다.
      * 예전 문구에 남아 있는 {링크}는 지운다.
      */
     fun render(template: String, callName: String, link: String): String {
@@ -56,7 +56,7 @@ object MessageRenderer {
             .joinToString("\n") { it.trimEnd() }
             .trim()
         val l = link.trim()
-        return if (l.isEmpty()) body else "$body\n$l".trim()
+        return if (l.isEmpty()) body else "$body\n\n$l".trim()
     }
 
     fun formatFor(entry: ContactEntry, formats: List<MessageFormat>): MessageFormat =

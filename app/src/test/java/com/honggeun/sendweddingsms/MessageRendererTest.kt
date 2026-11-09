@@ -19,17 +19,17 @@ class MessageRendererTest {
     }
 
     @Test fun defaultFormatWhenUnset() {
-        assertEquals("김철수님 안녕하세요.\n$link", MessageRenderer.messageFor(entry(), formats, link))
+        assertEquals("김철수님 안녕하세요.\n\n$link", MessageRenderer.messageFor(entry(), formats, link))
     }
 
     @Test fun callNameAndLinkAppended() {
         val e = entry().apply { format = "친구"; callName = "철수" }
-        assertEquals("철수야 오랜만이다.\n$link", MessageRenderer.messageFor(e, formats, link))
+        assertEquals("철수야 오랜만이다.\n\n$link", MessageRenderer.messageFor(e, formats, link))
     }
 
     @Test fun customMessageWins() {
         val e = entry().apply { format = "친구"; customMessage = "{이름}형님, 꼭 와 주세요 {링크}" }
-        assertEquals("김철수형님, 꼭 와 주세요\n$link", MessageRenderer.messageFor(e, formats, link))
+        assertEquals("김철수형님, 꼭 와 주세요\n\n$link", MessageRenderer.messageFor(e, formats, link))
     }
 
     @Test fun unknownFormatFallsBack() {

@@ -82,6 +82,7 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.action_templates -> startActivity(Intent(this, TemplatesActivity::class.java))
                 R.id.action_bulk_format -> askBulkFormat()
+                R.id.action_members -> FormatMembersActivity.pickAndOpen(this)
                 R.id.action_export -> askExport()
             }
             true
