@@ -12,8 +12,8 @@ android {
         minSdk = 24
         // 34로 두어 Android 15의 강제 전체화면(edge-to-edge) 레이아웃을 피한다.
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "2.0"
     }
 
     signingConfigs {
