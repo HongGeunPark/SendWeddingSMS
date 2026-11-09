@@ -17,7 +17,8 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,4 +87,13 @@
                 android:text="+ 형식 추가" />
         </LinearLayout>
     </ScrollView>
+
+    <Button
+        android:id="@+id/goContacts"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_margin="12dp"
+        android:text="다음: 보낼 사람 고르기"
+        android:textSize="18sp"
+        android:visibility="gone" />
 </LinearLayout>
