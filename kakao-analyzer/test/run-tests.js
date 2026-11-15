@@ -83,6 +83,12 @@ async function test(name, fn) {
     assert.ok(r.sessionTypes.some((t) => t.id === 'fight'));
     assert.ok(r.topics.length > 5);
     r.patterns.forEach((pt) => assert.ok(/요\.?$/.test(pt.sentence), pt.sentence));
+    const st = r.story;
+    assert.ok(st.lead.startsWith('민준과 서연'), st.lead);
+    assert.ok(st.big && st.big.count > 0);
+    assert.ok(st.awards.length >= 2);
+    assert.ok(st.wars.length >= 1 && /번의 전쟁|번의 다툼/.test(st.wars[0].title), JSON.stringify(st.wars[0]));
+    assert.ok(st.notes.length >= 3);
   });
 
   await test('분석: 사과 → 받아줌 패턴', () => {

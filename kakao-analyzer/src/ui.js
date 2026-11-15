@@ -66,6 +66,8 @@
         '<label>둘째 <select id="selB">' + opts(state.b) + '</select></label></div>');
     }
 
+    html.push(secStory(r, A, B));
+    html.push('<div class="divider">자세히 보기</div>');
     html.push(secSummary(r, A, B));
     html.push(secApology(r, A, B));
     html.push(secPatterns(r, A, B));
@@ -78,6 +80,55 @@
 
     $('#report').innerHTML = html.join('');
     bindReport();
+  }
+
+  var ICONS = { dish: '🍽️', phone: '📱', clock: '⏰', glass: '🍻', coin: '💸', game: '🎮', eye: '👀', chat: '💬' };
+  function secStory(r, A, B) {
+    var st = r.story, out = [];
+    var cls = function (n) { return n === A.name ? 'a' : 'b'; };
+    var card = function (icon, title, body) {
+      return '<article class="scard">' + (icon ? '<div class="icon" aria-hidden="true">' + icon + '</div>' : '') + (title ? '<h2 class="big2">' + title + '</h2>' : '') + body + '</article>';
+    };
+    out.push('<article class="scard"><span class="eyebrow">카톡 리포트</span><p class="lead">' + esc(st.lead) + '</p><p class="t"><mark>' + esc(st.thesis) + '</mark></p></article>');
+
+    if (st.duels.length || st.big) {
+      var body = st.duels.map(function (d) {
+        var max = Math.max(d.a, d.b, 1);
+        return '<div class="duel"><span class="q">‘' + esc(d.label) + '’</span>' +
+          '<div class="r"><span class="nm">' + esc(A.name) + '</span><span class="bw"><span class="bar a" style="width:' + (d.a / max * 78) + '%"></span><span class="n">' + num(d.a) + '</span></span></div>' +
+          '<div class="r"><span class="nm">' + esc(B.name) + '</span><span class="bw"><span class="bar b" style="width:' + (d.b / max * 78) + '%"></span><span class="n">' + num(d.b) + '</span></span></div></div>';
+      }).join('');
+      if (st.big) body += '<div class="bignum"><div><div class="q">‘' + esc(st.big.label) + '’</div><div class="cap">' + esc(st.big.caption) + '</div></div><div class="v"><b>' + num(st.big.count) + '</b><span>번</span></div></div>';
+      out.push(card('', '', '<span class="eyebrow">말 대결</span>' + body));
+    }
+
+    if (st.awards.length) {
+      var medals = ['🥇', '🥈', '🥉'];
+      var lines = st.awards.map(function (a, i) {
+        var head = a.nick ? a.title + '은 ' + a.who + '의 ‘' + a.nick + '’, ' + num(a.count) + '번이에요. ' : a.title + '은 ' + a.who + ', ' + num(a.count) + '번이에요. ';
+        return '<p>' + medals[i] + ' ' + esc(head) + (i === 0 ? '<mark>' + esc(a.line) + '</mark>' : esc(a.line)) + '</p>';
+      }).join('');
+      out.push(card('🏆', esc(st.awards[0].title) + ' 시상식', '<div class="awards">' + lines + '</div>'));
+    }
+
+    st.wars.forEach(function (w) {
+      out.push(card(ICONS[w.icon] || '💥', esc(w.title),
+        '<p class="t">' + esc(w.dates) + '</p><p class="t">' + esc(w.ender) + '</p>' +
+        (w.quote.text ? '<div class="bubbles"><div class="bub ' + cls(w.quote.who) + '">' + esc(w.quote.text) + '</div></div>' : '') +
+        (w.insight ? '<p class="t"><mark>' + esc(w.insight) + '</mark></p>' : '')));
+    });
+
+    if (r.court.caseCount) {
+      var cp = r.court.people;
+      var bits = cp.map(function (p) { return J(p.name, '은', '는') + ' ' + esc(p.style.split(':')[0]); }).join(', ');
+      out.push(card('⚖️', '그래서 누가 잘못했냐면', '<p class="t"><mark>' + esc(r.court.overall) + '</mark></p><p class="t">' + bits + '이에요. 사건별 판결문은 아래 "대화 재판"에 있어요.</p>'));
+    }
+
+    if (st.notes.length) {
+      out.push('<article class="scard"><h2 class="big2" style="text-align:left">' + esc(st.lead.replace(/ 카톡을 읽어봤어요\.$/, ' 카톡')) + ',<br>남이 읽어주니까 보이는 것들</h2><ul class="notes">' +
+        st.notes.map(function (n) { return '<li><span>' + esc(n) + '</span></li>'; }).join('') + '</ul></article>');
+    }
+    return '<section class="story" id="story" aria-label="스토리 카드">' + out.join('') + '</section>';
   }
 
   function secSummary(r, A, B) {

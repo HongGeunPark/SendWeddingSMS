@@ -468,13 +468,14 @@ var KakaoCore = (function () {
     // 재판할 사건: 다툼으로 분류된 대화 + 서운함이 나오고 비난·방어·사과가 오간 대화
     var fightSessions = sessions.map(function (s, i) { return [s, i]; }).filter(function (x) {
       var s = x[0];
-      if (s.type === 'fight') return true;
+      if (s.type === 'fight') { s.isCase = true; return true; }
       var feel = false, heat = false;
       s.msgs.forEach(function (m) {
         var b = String(m.body || '').toLowerCase();
         if (m.f.neg || C.feeling.test(b)) feel = true;
         if (m.f.apology || C.blame.test(b) || C.defend.test(b)) heat = true;
       });
+      if (feel && heat) s.isCase = true;
       return feel && heat;
     });
     var fightByTs = {};
@@ -591,6 +592,211 @@ var KakaoCore = (function () {
       misreads: misreads.slice(-6).reverse(), misreadCount: misreads.length,
       charges: CHARGES, merits: MERITS
     };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 5-2. 스토리 카드 (큰 숫자, 말 대결, 시상식, 싸움 이야기)               */
+  /* ------------------------------------------------------------------ */
+
+  var PHRASES = [
+    { label: '보고 싶어', re: /보고\s?싶|보고시퍼|보구싶|보고파/, ask: false },
+    { label: '사랑해', re: /사랑해|사랑행|사랑한다|싸랑해/, ask: false },
+    { label: '미안해', re: /미안|미얀/, ask: false },
+    { label: '괜찮아?', re: /괜찮아\s*\?|괜찮아요\s*\?|괜춘\?|괜찮니/, ask: true },
+    { label: '집 잘 들어갔어?', re: /잘 들어갔|잘들어갔|집 도착했어|집 갔어\?|도착했어\?|들어갔어\?/, ask: true },
+    { label: '밥 먹었어?', re: /밥 ?(먹었|먹음|먹어써)\S*\s*\?|밥은\s*\?|점심 먹었|저녁 먹었/, ask: true },
+    { label: '뭐해?', re: /뭐해|뭐 해|뭐하냐|머해|모해/, ask: true },
+    { label: '잘 자', re: /잘자|잘 자|굿나잇|굿밤/, ask: false },
+    { label: '고마워', re: /고마워|고맙|땡큐|thank/, ask: false },
+    { label: '알아서 해', re: /알아서 해|알아서해|맘대로 해|마음대로 해/, ask: false },
+    { label: '귀여워', re: /귀여|귀엽/, ask: false },
+    { label: '배고파', re: /배고파|배고프|배고팡/, ask: false }
+  ];
+  var CARING = ['집 잘 들어갔어?', '괜찮아?', '밥 먹었어?', '보고 싶어', '사랑해', '잘 자'];
+
+  var TRANSLATE = {
+    'ㅇㅋ': "번역하면 '들었어, 근데 이해는 못 했어'예요.", '오키': "번역하면 '들었어, 근데 이해는 못 했어'예요.",
+    'ㅇㅇ': "번역하면 '응, 근데 지금 좀 바빠'예요.", '응': '세상에서 제일 짧고 무해한 대답이에요.',
+    '웅': "'응'에 애교를 한 스푼 넣은 버전이에요.", '엉': "'응'보다 한 톤 낮은, 졸린 버전이에요.",
+    '알아서 해': '이 말은 알아서 하라는 뜻이 아니에요.', '알아서해': '이 말은 알아서 하라는 뜻이 아니에요.',
+    '맘대로 해': '이 말은 마음대로 하라는 뜻이 아니에요.', '됐어': "번역하면 '안 됐어'예요.",
+    '헐': '리액션 장인의 기본기예요.', '아': '모든 감정을 담을 수 있는 한 글자예요.',
+    '그래': "번역하면 '일단 알겠어'예요.", '알겠어': "번역하면 '일단 알겠어, 나중에 다시 얘기해'예요.",
+    '알았어': "번역하면 '일단 알겠어, 나중에 다시 얘기해'예요.", '사랑해': '이 정도면 인사말이에요.',
+    '뭐해': "번역하면 '나랑 놀아 줘'예요.", '뭐해?': "번역하면 '나랑 놀아 줘'예요.",
+    '보고싶어': '하루에도 몇 번씩 진심이었어요.', '보고 싶어': '하루에도 몇 번씩 진심이었어요.',
+    '대박': '감탄사 담당이에요.', '진짜?': '세상 모든 얘기에 놀라 주는 사람이에요.', '진짜': '세상 모든 얘기에 맞장구쳐 주는 사람이에요.',
+    '미안해': '먼저 숙이는 쪽이 지는 게 아니라는 걸 아는 사람이에요.', '고마워': '고마운 걸 그냥 넘기지 않는 사람이에요.',
+    'ㅠㅠ': '말 대신 눈물 두 방울로 다 설명하는 사람이에요.', '배고파': "번역하면 '맛있는 거 먹으러 가자'예요.",
+    '졸려': "번역하면 '이제 잘 자라고 해 줘'예요.", '잘자': '하루의 마지막 말은 늘 이거였어요.', '잘 자': '하루의 마지막 말은 늘 이거였어요.',
+    '왜': '모든 대화를 시작하게 만드는 한 글자예요.', '왜?': '모든 대화를 시작하게 만드는 한 글자예요.',
+    '네': '연애 중에도 예의는 지키는 사람이에요.', '넵': '연애 중에도 예의는 지키는 사람이에요.', '오': '짧지만 관심은 있다는 뜻이에요.'
+  };
+
+  var FIGHT_TOPICS = [
+    { name: '설거지·집안일', icon: 'dish', re: /설거지|청소|빨래|집안일|분리수거/ },
+    { name: '연락', icon: 'phone', re: /연락|답장|읽씹|안읽씹|카톡 왜|전화 왜|전화를 왜|전화 좀/ },
+    { name: '지각·약속', icon: 'clock', re: /늦|약속|기다렸|기다리/ },
+    { name: '친구·술자리', icon: 'glass', re: /친구|술|회식|클럽|모임/ },
+    { name: '돈', icon: 'coin', re: /돈|카드|결제|더치|계산/ },
+    { name: '게임', icon: 'game', re: /게임|롤|피시방|pc방/ },
+    { name: '질투', icon: 'eye', re: /전여친|전남친|여사친|남사친|이성|딴 여자|딴 남자|다른 여자|다른 남자/ },
+    { name: '말투', icon: 'chat', re: /말투|말을 왜|그런 식|그런식|말 좀/ }
+  ];
+  var KNUM = ['영', '한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열'];
+
+  function normPhrase(b) {
+    return String(b).trim().replace(/[.!~]+$/, '').replace(/ㅋ{2,}/g, 'ㅋㅋ').replace(/ㅎ{2,}/g, 'ㅎㅎ').replace(/[ㅠㅜ]{2,}/g, 'ㅠㅠ').replace(/\?+$/, '?');
+  }
+  function fmtKDate(ts, withYear) {
+    var d = new Date(ts);
+    return (withYear ? d.getFullYear() + '년 ' : '') + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+  }
+  function dateList(tsList) {
+    var prevY = null;
+    return tsList.map(function (ts) {
+      var y = new Date(ts).getFullYear(), out = fmtKDate(ts, y !== prevY);
+      prevY = y; return out;
+    }).join(', ');
+  }
+
+  function storyOf(r, M, sessions, turns) {
+    var A = r.a, B = r.b, pA = r.people[0], pB = r.people[1];
+    var other = function (w) { return w === A ? B : A; };
+    var texts = M.filter(function (m) { return m.kind === 'text' || m.kind === 'link'; });
+
+    /* 말 대결 */
+    var duels = PHRASES.map(function (ph) {
+      var c = {}; c[A] = 0; c[B] = 0;
+      var first = null, last = null;
+      texts.forEach(function (m) { if (ph.re.test(String(m.body).toLowerCase())) { c[m.who]++; if (!first) first = m; last = m; } });
+      return { label: ph.label, ask: ph.ask, a: c[A], b: c[B], total: c[A] + c[B], first: first, last: last };
+    });
+    var picked = duels.filter(function (d) { return d.total >= 5 && Math.abs(d.a - d.b) / d.total >= 0.25; }).map(function (d) {
+      d.skew = Math.abs(d.a - d.b) / d.total * Math.log(d.total + 1); return d;
+    }).sort(function (x, y) { return y.skew - x.skew; }).slice(0, 3)
+      .map(function (d) { return { label: d.label, a: d.a, b: d.b }; });
+
+    var big = null;
+    duels.forEach(function (d) {
+      if (CARING.indexOf(d.label) < 0) return;
+      [[A, d.a], [B, d.b]].forEach(function (x) {
+        if (x[1] >= 3 && (!big || x[1] > big.count)) big = { label: d.label, who: x[0], count: x[1], ask: d.ask };
+      });
+    });
+    if (big) big.caption = josa(big.who, '이', '가') + (big.ask ? ' 물어본 횟수' : ' 말한 횟수');
+
+    /* 시상식 */
+    var phraseBy = {};
+    texts.forEach(function (m) {
+      var n = normPhrase(m.body);
+      if (!n || n.length > 10 || /^[ㅋㅎㅠㅜ\s?!.]+$/.test(n) || /https?:/.test(n)) return;
+      if (!phraseBy[n]) phraseBy[n] = {}; inc(phraseBy[n], m.who);
+    });
+    var phraseList = Object.keys(phraseBy).map(function (k) {
+      var o = phraseBy[k], a = o[A] || 0, b = o[B] || 0;
+      return { phrase: k, who: a >= b ? A : B, count: Math.max(a, b) };
+    }).sort(function (x, y) { return y.count - x.count; });
+    phraseList = phraseList.filter(function (x) { return x.phrase.length <= 6; });
+    var awards = [];
+    if (phraseList[0] && phraseList[0].count >= 3) awards.push(phraseList[0]);
+    var second = phraseList.filter(function (x) { return awards[0] && x.who !== awards[0].who && x.count >= 3; })[0] ||
+      phraseList.filter(function (x) { return awards[0] && x.phrase !== awards[0].phrase && x.count >= 3; })[0];
+    if (second) awards.push(second);
+    awards = awards.map(function (x) {
+      var t = TRANSLATE[x.phrase] || TRANSLATE[x.phrase.replace(/\?$/, '')] || '둘만 아는 유행어가 됐어요.';
+      return { title: "'" + x.phrase + "'상", who: x.who, count: x.count, line: t };
+    });
+    var nickTop = null;
+    r.people.forEach(function (p) { if (p.nick[0] && (!nickTop || p.nick[0].count > nickTop.count)) nickTop = { who: p.name, nick: p.nick[0].key, count: p.nick[0].count }; });
+    if (nickTop && nickTop.count >= 3) {
+      var perDay = nickTop.count / Math.max(1, r.spanDays);
+      var period = r.spanDays >= 730 ? Math.round(r.spanDays / 365) + '년' : r.spanDays >= 60 ? Math.round(r.spanDays / 30) + '달' : r.spanDays + '일';
+      awards.push({ title: '애칭상', who: nickTop.who, count: nickTop.count, nick: nickTop.nick,
+        line: period + ' 동안 ' + (perDay >= 1 ? '하루에 거의 ' + Math.round(perDay) + '번' : '일주일에 ' + Math.max(1, Math.round(perDay * 7)) + '번 정도') + ' 불렀어요.' });
+    }
+
+    /* 다툰 뒤 먼저 연락한 사람 */
+    var after = {}; after[A] = 0; after[B] = 0;
+    var caseIdx = [];
+    sessions.forEach(function (s, i) { if (s.isCase) caseIdx.push(i); });
+    caseIdx.forEach(function (i) { var nx = sessions[i + 1]; if (nx) after[nx.msgs[0].who]++; });
+    var reach = null, rt = after[A] + after[B];
+    if (rt >= 2) { var rw = after[A] >= after[B] ? A : B; reach = { who: rw, count: after[rw], total: rt }; }
+
+    /* 싸움 주제 이야기 */
+    var groups = {};
+    caseIdx.forEach(function (i) {
+      var s = sessions[i], best = null, bestN = 0;
+      FIGHT_TOPICS.forEach(function (t) {
+        var n = s.msgs.filter(function (m) { return t.re.test(String(m.body || '').toLowerCase()); }).length;
+        if (n > bestN) { bestN = n; best = t; }
+      });
+      if (!best) return;
+      (groups[best.name] = groups[best.name] || { topic: best, idx: [] }).idx.push(i);
+    });
+    var wars = Object.keys(groups).map(function (k) { return groups[k]; }).sort(function (x, y) { return y.idx.length - x.idx.length; }).slice(0, 2).map(function (g) {
+      var n = g.idx.length;
+      var enders = {}, lastBy = {};
+      g.idx.forEach(function (i) { var s = sessions[i], lm = s.msgs[s.msgs.length - 1]; inc(enders, lm.who); lastBy[lm.who] = lm; });
+      var ew = (enders[A] || 0) >= (enders[B] || 0) ? A : B;
+      var lines = {}; g.idx.forEach(function (i) { var lm = sessions[i].msgs[sessions[i].msgs.length - 1]; if (lm.who === ew) inc(lines, normPhrase(lm.body || lm.text)); });
+      var topLine = Object.keys(lines).sort(function (x, y) { return lines[y] - lines[x]; })[0];
+      var same = topLine && lines[topLine] === n;
+      var rf = {}; rf[A] = 0; rf[B] = 0; var rft = 0;
+      g.idx.forEach(function (i) { var nx = sessions[i + 1]; if (nx) { rf[nx.msgs[0].who]++; rft++; } });
+      var rfw = rf[A] >= rf[B] ? A : B;
+      var nword = n <= 10 ? KNUM[n] : String(n);
+      return {
+        icon: g.topic.icon,
+        title: g.topic.name + ' ' + nword + ' 번의 ' + (n === 1 ? '다툼' : '전쟁'),
+        dates: g.topic.name + (hasBatchim(g.topic.name) ? '으로' : '로') + ' 다툰 날이 ' + nword + ' 번 있어요. ' + dateList(g.idx.map(function (i) { return sessions[i].start; })) + '이에요.',
+        ender: n === 1 ? josa(ew, '이', '가') + ' 이 말로 끝냈어요.' : (enders[ew] === n ? nword + ' 번 다 ' + josa(ew, '이', '가') + (same ? ' 이 말로 끝냈어요.' : ' 마지막 말을 했어요.') : nword + ' 번 중 ' + enders[ew] + '번은 ' + josa(ew, '이', '가') + ' 마지막 말을 했어요.'),
+        quote: { who: ew, text: topLine || '' },
+        insight: rft ? '다툰 뒤 먼저 말을 건 건 ' + rft + '번 중 ' + rf[rfw] + '번, ' + (rf[rfw] === rft ? '매번 ' : '') + rfw + (hasBatchim(rfw) ? '이었어요.' : '였어요.') : null
+      };
+    });
+
+    /* 남이 읽어주니까 보이는 것들 */
+    var notes = [];
+    var loveD = duels.filter(function (d) { return d.label === '사랑해'; })[0];
+    if (loveD && loveD.first) {
+      notes.push(loveD.first.who === loveD.last.who && loveD.first !== loveD.last ?
+        "처음 '사랑해'도, 마지막 '사랑해'도 " + loveD.first.who + (hasBatchim(loveD.first.who) ? '이에요.' : '예요.') :
+        "처음 '사랑해'는 " + josa(loveD.first.who, '이', '가') + ' 먼저 (' + fmtKDate(loveD.first.ts, true) + "). 마지막 '사랑해'는 " + loveD.last.who + ' (' + fmtKDate(loveD.last.ts, true) + ').');
+    }
+    [A, B].forEach(function (w) {
+      var best = null;
+      Object.keys(phraseBy).forEach(function (k) {
+        if (k.length < 2 || /^(ㅇㅇ|ㅇㅋ|응|웅|엉|네|넵|어)$/.test(k)) return;
+        var c = phraseBy[k][w] || 0; if (!best || c > best.c) best = { k: k, c: c };
+      });
+      if (best && best.c >= 3) notes.push(josa(w, '이', '가') + " 제일 많이 한 말: '" + best.k + "' (" + best.c + '번)');
+    });
+    var okD = duels.filter(function (d) { return d.label === '괜찮아?'; })[0];
+    if (okD && okD.total >= 2) {
+      var weeks = Math.max(1, r.spanDays / 7), hi = okD.a >= okD.b ? A : B, hc = Math.max(okD.a, okD.b), lc = Math.min(okD.a, okD.b);
+      var rate = hc / weeks;
+      notes.push("'괜찮아?'는 " + josa(hi, '이', '가') + ' ' + (rate >= 1 ? '일주일에 ' + rate.toFixed(rate >= 10 ? 0 : 1).replace(/\.0$/, '') + '번' : '모두 ' + hc + '번') + '. ' + josa(other(hi), '은', '는') + ' ' + (lc ? lc + '번 물어봤어요.' : '한 번도 안 물어봤어요.'));
+    }
+    if (reach) notes.push('다투고 먼저 연락한 건 ' + reach.total + '번 중 ' + reach.count + '번 ' + reach.who + (hasBatchim(reach.who) ? '이에요.' : '예요.'));
+    if (r.silence.ms >= 2 * DAY) notes.push('가장 오래 연락이 끊긴 건 ' + fmtDuration(r.silence.ms) + '. ' + fmtKDate(r.silence.from, true) + '부터 ' + fmtKDate(r.silence.to) + '까지예요.');
+    if (pA.replyMedian !== null && pB.replyMedian !== null && Math.abs(pA.replyMedian - pB.replyMedian) >= MIN) {
+      var fast = pA.replyMedian < pB.replyMedian ? pA : pB, slow = fast === pA ? pB : pA;
+      notes.push('답장은 ' + josa(fast.name, '이', '가') + ' 보통 ' + fmtDuration(fast.replyMedian) + ', ' + josa(slow.name, '은', '는') + ' ' + fmtDuration(slow.replyMedian) + '.');
+    }
+
+    /* 첫 카드 */
+    var months = Math.max(1, Math.round(r.spanDays / 30));
+    var span = months >= 24 ? Math.round(months / 12) + '년치' : months + '개월치';
+    var lead = A + (hasBatchim(A) ? '과 ' : '와 ') + B + ', ' + span + ' 카톡을 읽어봤어요.';
+    var thesis;
+    var top = picked[0];
+    if (top && big && big.label !== top.label && (top.a > top.b ? A : B) !== big.who) thesis = '표현을 안 한 게 아니라, 표현하는 방식이 달랐던 거예요.';
+    else if (top) { var tw = top.a > top.b ? A : B, tc = Math.max(top.a, top.b), oc = Math.min(top.a, top.b); thesis = "'" + top.label + "'는 " + josa(tw, '이', '가') + ' ' + tc + '번, ' + josa(other(tw), '은', '는') + ' ' + oc + '번이었어요.'; }
+    else thesis = josa(pA.msgs >= pB.msgs ? A : B, '이', '가') + ' 조금 더 말이 많았어요.';
+
+    return { lead: lead, thesis: thesis, duels: picked, big: big, awards: awards, wars: wars, notes: notes, reach: reach };
   }
 
   function analyze(parsed, A, B) {
@@ -943,7 +1149,7 @@ var KakaoCore = (function () {
       return o;
     }).filter(function (t) { return t.total > 0; }).sort(function (a, b) { return b.total - a.total; });
 
-    return {
+    var res = {
       a: A, b: B, people: people,
       total: M.length, allTotal: all.length,
       first: M[0].ts, last: M[M.length - 1].ts,
@@ -955,6 +1161,8 @@ var KakaoCore = (function () {
       fights: fights, topics: topics, patterns: patterns,
       court: courtOf(A, B, sessions, turns, fights)
     };
+    res.story = storyOf(res, M, sessions, turns);
+    return res;
   }
 
   /* ------------------------------------------------------------------ */
@@ -976,7 +1184,10 @@ var KakaoCore = (function () {
       morning: [[['A', '굿모닝 ☀️'], ['B', '잘 잤어? ㅎㅎ'], ['A', '응 너는?'], ['B', '나 완전 꿀잠 잤어']],
         [['B', '일어났어?'], ['A', '방금 일어났어 ㅠㅠ 지각각'], ['B', '헐 빨리 가 ㅋㅋㅋ']],
         [['A', '좋은 아침 자기야'], ['B', '좋은 아침 ❤️'], ['B', '이모티콘']]],
-      lunch: [[['B', '점심 뭐 먹어?'], ['A', '김치찌개 먹을 듯'], ['A', '사진'], ['B', '와 맛있겠다'], ['B', '나는 샐러드 ㅠㅠ 다이어트 중']],
+      lunch: [[['B', '나 오늘 야근이야 ㅠㅠ'], ['A', 'ㅇㅋ'], ['A', '끝나면 연락해']],
+        [['A', '이따 전화할게'], ['B', '웅']],
+        [['A', '오늘 회식 있어서 늦을 듯'], ['B', '웅'], ['B', '집 잘 들어갔어? 하고 꼭 연락해']],
+        [['B', '나 점심 먹으러 감'], ['A', 'ㅇㅋ']],[['B', '점심 뭐 먹어?'], ['A', '김치찌개 먹을 듯'], ['A', '사진'], ['B', '와 맛있겠다'], ['B', '나는 샐러드 ㅠㅠ 다이어트 중']],
         [['A', '배고파'], ['B', '나도 ㅋㅋ 오늘 회의 너무 길어'], ['A', '고생했어 맛있는 거 먹어']],
         [['B', '사진'], ['A', '오 파스타? 대박 맛있어 보인다'], ['B', '회사 앞에 새로 생겼어 ㅎㅎ 다음에 같이 가자']]],
       evening: [[['A', '퇴근했어?'], ['B', '이제 퇴근! 너무 피곤해'], ['A', '고생했어 ㅠㅠ 오늘 팀장님 또 그랬어?'], ['B', '응 진짜 스트레스 받아'], ['A', '힘내 내가 주말에 맛있는 거 사줄게'], ['B', '역시 너밖에 없다 ㅠㅠ']],
