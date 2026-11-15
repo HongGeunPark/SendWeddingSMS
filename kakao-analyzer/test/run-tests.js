@@ -101,6 +101,29 @@ async function test(name, fn) {
     assert.strictEqual(r.people[0].apology, 4);
   });
 
+  await test('재판: 방어, 공감, 오해 신호', () => {
+    const L = (d, t, w, m) => `2025. 3. ${d}. 오후 ${t}, ${w} : ${m}`;
+    const lines = [
+      L(1, '8:00', '지우', '나 오늘 진짜 서운했어'),
+      L(1, '8:01', '현수', '내가 뭘 했다고 그래'),
+      L(1, '8:02', '지우', '너는 맨날 이런 식이야 짜증나'),
+      L(1, '8:03', '현수', '미안해 그랬구나'),
+      L(2, '8:00', '현수', '오늘 좀 서운했어'),
+      L(2, '8:02', '지우', '그랬구나 미안해'),
+      L(3, '8:00', '현수', '너 오늘 좀 늦었네'),
+      L(3, '8:01', '지우', '늦은 게 뭐 어때서 화났어?'),
+      L(3, '8:02', '현수', '그런 뜻 아니야 걱정돼서 그랬어')
+    ];
+    const c = K.analyze(K.parse(lines.join('\n')), '지우', '현수').court;
+    const [ji, hy] = c.people;
+    assert.strictEqual(hy.charges.find((x) => x.kind === 'defend').count, 1, '현수가 "내가 뭘"로 방어');
+    assert.strictEqual(ji.charges.find((x) => x.kind === 'blame').count, 1, '지우가 "맨날"로 단정');
+    assert.ok(ji.merits.find((x) => x.kind === 'ack').count >= 1, '지우가 "그랬구나"로 공감');
+    assert.strictEqual(c.misreadCount, 1);
+    assert.strictEqual(c.misreads[0].misreadBy, '지우');
+    assert.ok(/과실 비율|무죄|쌍방/.test(c.overall), c.overall);
+  });
+
   await test('조사', () => {
     assert.strictEqual(K.josa('민준', '이', '가'), '민준이');
     assert.strictEqual(K.josa('서아', '이', '가'), '서아가');

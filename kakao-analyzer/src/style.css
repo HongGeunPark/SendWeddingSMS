@@ -15,6 +15,8 @@
   --b-soft: #fde8de;
   --warn: #9a5b00;
   --warn-soft: #fff1d9;
+  --good: #1f7a4d;
+  --good-soft: #e0f2e8;
   --body: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   --num: "SF Pro Rounded", "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
   --radius: 14px;
@@ -23,13 +25,13 @@
   :root:not([data-theme="light"]) {
     --bg: #141113; --surface: #1d191b; --sunken: #262124; --ink: #f2edef; --muted: #b9adb2; --faint: #8f8489;
     --line: #352e31; --accent: #f07aa5; --accent-soft: #3a1f2b; --a: #3987e5; --a-soft: #172a40;
-    --b: #d95926; --b-soft: #3b2117; --warn: #f0b552; --warn-soft: #3a2a10; color-scheme: dark;
+    --b: #d95926; --b-soft: #3b2117; --warn: #f0b552; --warn-soft: #3a2a10; --good: #6fcf9a; --good-soft: #17301f; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #141113; --surface: #1d191b; --sunken: #262124; --ink: #f2edef; --muted: #b9adb2; --faint: #8f8489;
   --line: #352e31; --accent: #f07aa5; --accent-soft: #3a1f2b; --a: #3987e5; --a-soft: #172a40;
-  --b: #d95926; --b-soft: #3b2117; --warn: #f0b552; --warn-soft: #3a2a10; color-scheme: dark;
+  --b: #d95926; --b-soft: #3b2117; --warn: #f0b552; --warn-soft: #3a2a10; --good: #6fcf9a; --good-soft: #17301f; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -235,3 +237,16 @@ footer { font-size: 12.5px; color: var(--faint); display: flex; flex-direction: 
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .report { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+
+/* court */
+.gavel { display: flex; flex-direction: column; gap: 12px; }
+.gavel .final { font-size: 19px; font-weight: 800; line-height: 1.45; }
+.style { font-weight: 700; }
+.tag { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; font-weight: 700; }
+.tag.bad { background: var(--warn-soft); color: var(--warn); }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.case { display: flex; flex-direction: column; gap: 12px; }
+.case .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.case .ruling { font-weight: 800; }
+.count { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.count .line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }

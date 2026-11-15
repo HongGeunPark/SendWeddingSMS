@@ -72,6 +72,7 @@
     html.push(secTopics(r, A, B));
     html.push(secTypes(r));
     html.push(secFights(r, A, B));
+    html.push(secCourt(r, A, B));
     html.push(secRhythm(r, A, B));
     html.push(secFun(r, A, B));
 
@@ -221,6 +222,51 @@
     return '<section class="sec" id="fights"><header><span class="eyebrow">다툼 기록</span><h2>다툰 날 ' + r.fights.length + '번</h2>' +
       '<p class="muted small">서운함·짜증 표현이 여러 번 오간 대화예요. 먼저 서운해한 횟수: ' + esc(A.name) + ' ' + upA + '번, ' + esc(B.name) + ' ' + upB + '번. 가장 진했던 ' + list.length + '번을 보여 드려요.</p></header>' +
       '<div class="fights">' + rows + '</div></section>';
+  }
+
+  function secCourt(r, A, B) {
+    var c = r.court;
+    var cls = function (n) { return n === A.name ? 'a' : 'b'; };
+    var bub = function (q) { return '<div class="bub ' + cls(q.who) + '"><span class="by">' + esc(q.who) + '</span>' + esc(q.text) + '</div>'; };
+    var head = '<header><span class="eyebrow">대화 재판</span><h2>그래서 누가 잘못했을까</h2>' +
+      '<p class="muted small">다툰 대화에서 "맨날", "항상" 같은 단정, 서운하다는 말에 해명부터 하기, 무응답, 단답을 잘못으로 보고, 먼저 공감하기, 먼저 사과하기, 먼저 화해하기를 잘한 점으로 봤어요. 재미로 보는 판결이에요.</p></header>';
+    if (!c.caseCount && !c.misreadCount) return '<section class="sec" id="court">' + head + '<div class="card"><p>재판할 다툼이 없어요. 사이좋은 커플이네요.</p></div></section>';
+    var pa = c.people[0], pb = c.people[1], tot = pa.score + pb.score;
+    var bar = tot ? '<div class="split" role="img" aria-label="과실 비율"><span class="a" style="width:' + (pa.score / tot * 100) + '%" data-tip="' + esc(pa.name) + ' 과실 점수 ' + pa.score + '"></span><span class="b" style="width:' + (pb.score / tot * 100) + '%" data-tip="' + esc(pb.name) + ' 과실 점수 ' + pb.score + '"></span></div>' +
+      '<div class="splitlab"><span>' + who(pa.name, 'a') + ' 과실 ' + Math.round(pa.score / tot * 100) + '%</span><span>' + who(pb.name, 'b') + ' 과실 ' + Math.round(pb.score / tot * 100) + '%</span></div>' : '';
+    var finalCard = '<div class="card gavel"><span class="eyebrow">최종 판결 · 사건 ' + c.caseCount + '건</span><p class="final">' + esc(c.overall) + '</p>' + bar +
+      '<p class="muted small">각자 진 사건: ' + esc(pa.name) + ' ' + pa.lost + '건, ' + esc(pb.name) + ' ' + pb.lost + '건</p></div>';
+
+    function person(p, k) {
+      var bad = p.charges.filter(function (x) { return x.count; }).map(function (x) { return '<span class="tag bad">' + esc(x.name) + ' ' + x.count + '번</span>'; }).join('');
+      var good = p.merits.filter(function (x) { return x.count; }).map(function (x) { return '<span class="tag good">' + esc(x.name) + ' ' + x.count + '번</span>'; }).join('');
+      return '<div class="card" style="display:flex;flex-direction:column;gap:10px">' + who(p.name, k) +
+        '<p class="style">' + esc(p.style) + '</p>' +
+        (p.ackRate !== null ? '<p class="small muted">상대가 서운하다고 할 때 먼저 받아준 비율 <b>' + pct(p.ackRate) + '</b> (' + p.feelingsHeard + '번 중)</p>' : '') +
+        (p.misread ? '<p class="small muted">상대 말을 오해한 것 같은 순간 <b>' + p.misread + '번</b></p>' : '') +
+        (bad ? '<div class="chips">' + bad + '</div>' : '') + (good ? '<div class="chips">' + good + '</div>' : '') + '</div>';
+    }
+
+    var cases = c.cases.map(function (cs) {
+      var lines = cs.items.map(function (it) {
+        return '<div class="count"><div class="line"><span class="tag ' + (it.merit ? 'good' : 'bad') + '">' + (it.merit ? '정상 참작 · ' : '') + esc(it.name) + (it.count > 1 ? ' ×' + it.count : '') + '</span>' + who(it.who, cls(it.who)) + '<span class="muted small">' + esc(it.desc) + '</span></div>' +
+          (it.quotes.length ? '<div class="bubbles">' + it.quotes.map(bub).join('') + '</div>' : '') + '</div>';
+      }).join('');
+      return '<div class="card case"><div class="head"><span class="d num"><b>' + d(cs.ts) + '</b> 사건</span><span class="muted small">' + num(cs.len) + '마디</span></div>' +
+        '<p class="ruling">' + (cs.guilty ? '<span class="dot ' + cls(cs.guilty) + '" style="display:inline-block;margin-right:6px"></span>' : '') + esc(cs.verdict) + '</p>' + lines + '</div>';
+    }).join('');
+
+    var mis = c.misreads.map(function (m) {
+      return '<div class="card case"><div class="head"><span><b>' + d(m.ts) + '</b></span></div>' +
+        '<p>' + J(m.misreadBy, '이', '가') + ' ' + esc(m.speaker) + '의 말을 오해한 것 같아요. ' + (m.realized ? J(m.misreadBy, '이', '가') + ' 나중에 "그런 뜻이었구나" 하고 알아들었어요.' : J(m.speaker, '이', '가') + ' 바로 "그런 뜻 아니야" 하고 해명했거든요.') + '</p>' +
+        '<div class="bubbles">' + (m.original ? bub(m.original) : '') + bub(m.reaction) + bub(m.clarify) + '</div></div>';
+    }).join('');
+
+    return '<section class="sec" id="court">' + head + finalCard +
+      '<div class="grid2">' + person(pa, 'a') + person(pb, 'b') + '</div>' +
+      (cases ? '<h3>사건별 판결문 (잘못이 많았던 순)</h3><div class="fights">' + cases + '</div>' : '') +
+      (mis ? '<h3>이런 부분은 오해한 것 같아요 (' + c.misreadCount + '번)</h3><div class="pgrid">' + mis + '</div>' : '') +
+      '</section>';
   }
 
   function lineChart(r, A, B) {
