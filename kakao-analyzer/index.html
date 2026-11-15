@@ -300,7 +300,7 @@ var KakaoCore = (function () {
     if (u8[0] === 0xff && u8[1] === 0xfe) return new TextDecoder('utf-16le').decode(u8.subarray(2));
     if (u8[0] === 0xfe && u8[1] === 0xff) return new TextDecoder('utf-16be').decode(u8.subarray(2));
     var s = new TextDecoder('utf-8').decode(u8);
-    var bad = (s.slice(0, 20000).match(/�/g) || []).length;
+    var bad = (s.slice(0, 20000).match(/\uFFFD/g) || []).length;
     if (bad > 5) {
       try { return new TextDecoder('euc-kr').decode(u8); } catch (e) { /* utf-8 그대로 */ }
     }
