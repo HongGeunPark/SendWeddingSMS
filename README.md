@@ -28,3 +28,7 @@
 
 GitHub Actions(`.github/workflows/build-apk.yml`)가 푸시할 때마다 테스트와 APK 빌드를 해요.
 직접 빌드하려면 Android SDK가 있는 환경에서 `./gradlew assembleDebug`를 실행하세요.
+
+## 같이 들어 있는 것
+
+- [`kakao-analyzer/`](kakao-analyzer/): 카톡 대화 파일로 커플 대화를 분석하는 웹 페이지 (사과 횟수, 반응 패턴, 대화 주제 등). 브라우저 안에서만 돌아가요.
