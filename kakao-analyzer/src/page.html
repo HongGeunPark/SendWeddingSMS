@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--CSP--><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; form-action 'none'"><!--/CSP-->
+<title>카톡 연애 분석기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/*CSS*/
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="intro">
+      <h1>우리 카톡,<br><em>누가 더 많이 사과했을까?</em></h1>
+      <p class="muted">카카오톡에서 내보낸 대화 파일을 넣으면 어떤 얘기를 많이 했는지, 누가 얼마나 사과했는지, 한 사람이 뭘 하면 상대가 어떻게 반응하는지 정리해 드려요.</p>
+      <p class="lock"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg><span>대화 파일은 어디에도 올라가지 않아요. 이 화면 안에서만 읽고 분석해요. 인터넷이 끊겨 있어도 돼요.</span></p>
+    </div>
+    <div class="drop" id="drop">
+      <h3>대화 파일 넣기</h3>
+      <p class="small muted">.txt, .csv, .zip 파일을 여기로 끌어다 놓거나 골라 주세요.</p>
+      <div class="row">
+        <button class="btn primary" id="pickBtn" type="button">파일 고르기</button>
+        <button class="btn" id="sampleBtn" type="button">예시 대화로 보기</button>
+      </div>
+      <input id="file" type="file" accept=".txt,.csv,.zip,text/plain,text/csv,application/zip" hidden>
+      <p class="status" id="status" role="status"></p>
+      <details class="howto">
+        <summary>카톡 대화 내보내는 방법</summary>
+        <ol>
+          <li><b>안드로이드</b>: 채팅방 오른쪽 위 ≡ → 오른쪽 아래 ⚙ → <b>대화 내보내기</b> → <b>텍스트만 보내기</b> → 내 파일에 저장하거나 나에게 보내기</li>
+          <li><b>아이폰</b>: 채팅방 오른쪽 위 ≡ → 오른쪽 아래 ⚙ → <b>대화 내보내기</b> → <b>텍스트 메시지만</b> → 파일에 저장</li>
+          <li><b>PC (윈도우)</b>: 채팅방 오른쪽 위 ≡ → <b>대화 내용</b> → <b>대화 내보내기</b> → txt로 저장</li>
+          <li><b>맥</b>: 채팅방에서 ≡ → <b>대화 내보내기</b> → csv로 저장</li>
+        </ol>
+        <p class="small muted" style="margin-top:6px">zip으로 받았다면 그대로 넣어도 돼요. 1:1 채팅방이 가장 정확하고, 단체방이면 두 사람을 골라서 볼 수 있어요.</p>
+      </details>
+    </div>
+  </div>
+
+  <main id="report" class="report"></main>
+
+  <footer>
+    <p>분석은 단어 사전으로 세는 방식이라 말투나 농담에 따라 틀릴 수 있어요. 재미로 봐 주세요.</p>
+    <p>카카오와 관계없는 개인용 도구예요.</p>
+  </footer>
+</div>
+<script>
+/*CORE*/
+</script>
+<script>
+/*UI*/
+</script>
+</body>
+</html>
